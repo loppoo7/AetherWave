@@ -37,6 +37,21 @@ jobs:
       - name: Build debug APK
         run: ./gradlew --no-daemon --stacktrace testDebugUnitTest assembleDebug
 
+      - name: Package v1.0.0 source archive
+        run: |
+          mkdir -p /tmp/aetherwave-archive/AetherWave
+          rsync -a --exclude=".git" --exclude="app/build" --exclude=".gradle" ./ /tmp/aetherwave-archive/AetherWave/
+          cd /tmp/aetherwave-archive
+          zip -qr "$GITHUB_WORKSPACE/AetherWave-v1.0.0.zip" AetherWave
+
+      - name: Upload v1.0.0 source archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: AetherWave-v1.0.0-source
+          path: AetherWave-v1.0.0.zip
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v7
         with:

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,18 +51,18 @@ fun TrackRow(
         )
         Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(track.title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(track.artist, color = Color.White.copy(alpha = 0.62f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(track.title, color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(track.artist, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (trailingLabel != null) Text(trailingLabel, color = Color(0xFFB7C2FF), fontSize = 10.sp)
         }
-        Text(formatTrackDuration(track.durationMs), color = Color.White.copy(alpha = 0.54f), fontSize = 10.sp)
+        Text(formatTrackDuration(track.durationMs), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.54f), fontSize = 10.sp)
         if (onAdd != null) {
             Spacer(Modifier.width(8.dp))
             Box(
                 modifier = Modifier.size(34.dp).clip(RoundedCornerShape(12.dp))
-                    .background(Color.White.copy(alpha = 0.08f)).clickable(onClick = onAdd),
+                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)).clickable(onClick = onAdd),
                 contentAlignment = Alignment.Center,
-            ) { Text(if (trailingLabel == "REMOVE") "−" else "+", color = Color.White, fontSize = 22.sp) }
+            ) { Text(if (trailingLabel == "REMOVE") "−" else "+", color = MaterialTheme.colorScheme.onBackground, fontSize = 22.sp) }
         }
     }
 }

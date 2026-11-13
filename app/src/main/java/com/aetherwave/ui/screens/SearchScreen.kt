@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -50,25 +51,25 @@ fun SearchScreen(
     val focusManager = LocalFocusManager.current
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text("DISCOVER", color = Color.White.copy(alpha = 0.56f), fontSize = 10.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
-            Text("Find your next wave.", color = Color.White, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+            Text("DISCOVER", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.56f), fontSize = 10.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
+            Text("Find your next wave.", color = MaterialTheme.colorScheme.onBackground, fontSize = 27.sp, fontWeight = FontWeight.Bold)
         }
         Row(
-            modifier = Modifier.fillMaxWidth().liquidGlass(hazeState, Color.White.copy(alpha = 0.11f), RoundedCornerShape(20.dp)).padding(horizontal = 14.dp),
+            modifier = Modifier.fillMaxWidth().liquidGlass(hazeState, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.11f), RoundedCornerShape(20.dp)).padding(horizontal = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("⌕", color = Color.White.copy(alpha = 0.7f), fontSize = 25.sp)
+            Text("⌕", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f), fontSize = 25.sp)
             TextField(
                 value = state.query,
                 onValueChange = onQueryChanged,
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Songs, artists, albums...", color = Color.White.copy(alpha = 0.45f)) },
+                placeholder = { Text("Search YouTube Music songs...", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                 colors = TextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
@@ -82,7 +83,7 @@ fun SearchScreen(
         }
         state.error?.let { Text(it, color = Color(0xFFFFB7B7), fontSize = 12.sp) }
         if (state.hasSearched && !state.isLoading && state.error == null && state.results.isEmpty()) {
-            Text("No tracks found. Try another title or artist.", color = Color.White.copy(alpha = 0.62f), fontSize = 13.sp)
+            Text("No tracks found. Try another title or artist.", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 13.sp)
         }
         LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             itemsIndexed(state.results, key = { _, track -> track.id }) { index, track ->

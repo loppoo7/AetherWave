@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,7 +58,7 @@ import com.aetherwave.ui.viewmodel.SearchViewModel
 import androidx.compose.runtime.collectAsState
 
 @Composable
-fun AetherWaveApp() {
+fun AetherWaveApp(darkTheme: Boolean, onToggleTheme: () -> Unit) {
     val navController = rememberNavController()
     val hazeState = rememberLiquidGlassState()
     val playerViewModel: MainPlayerViewModel = hiltViewModel()
@@ -77,18 +78,23 @@ fun AetherWaveApp() {
     val audioPermission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_AUDIO else Manifest.permission.READ_EXTERNAL_STORAGE
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
-    ) { homeViewModel.refreshLocalAudio() }
-    val requestedPermissions = androidx.compose.runtime.remember {
-        buildList {
-            add(audioPermission)
-            if (Build.VERSION.SDK_INT >= 33) add(Manifest.permission.POST_NOTIFICATIONS)
+    ) { permissions -> if (permissions[audioPermission] == true) homeViewModel.refreshLocalAudio() }
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            permissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
         }
     }
-    LaunchedEffect(Unit) {
-        val missing = requestedPermissions.filter {
-            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+    LaunchedEffect(route, backStackEntry?.arguments?.getInt("tab")) {
+        val isLocalFilesTab = route == "library/{tab}" && backStackEntry?.arguments?.getInt("tab") == 1
+        if (isLocalFilesTab) {
+            if (ContextCompat.checkSelfPermission(context, audioPermission) == PackageManager.PERMISSION_GRANTED) {
+                homeViewModel.refreshLocalAudio()
+            } else {
+                permissionLauncher.launch(arrayOf(audioPermission))
+            }
         }
-        if (missing.isEmpty()) homeViewModel.refreshLocalAudio() else permissionLauncher.launch(missing.toTypedArray())
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -107,13 +113,9 @@ fun AetherWaveApp() {
                     hazeState = hazeState,
                     onPlayQueue = playerViewModel::playQueue,
                     onOpenLibrary = { tab -> navController.navigate("library/$tab") },
-                    onRefreshLocal = {
-                        if (ContextCompat.checkSelfPermission(context, audioPermission) == PackageManager.PERMISSION_GRANTED) {
-                            homeViewModel.refreshLocalAudio()
-                        } else {
-                            permissionLauncher.launch(arrayOf(audioPermission))
-                        }
-                    },
+                    darkTheme = darkTheme,
+                    onToggleTheme = onToggleTheme,
+                    onOpenSearch = { navController.navigate("search") { launchSingleTop = true } },
                 )
             }
             composable("search") {
@@ -141,6 +143,13 @@ fun AetherWaveApp() {
                     onDeletePlaylist = libraryViewModel::deletePlaylist,
                     onPlayQueue = playerViewModel::playQueue,
                     onRemoveTrack = libraryViewModel::removeTrack,
+                    onRefreshLocal = {
+                        if (ContextCompat.checkSelfPermission(context, audioPermission) == PackageManager.PERMISSION_GRANTED) {
+                            homeViewModel.refreshLocalAudio()
+                        } else {
+                            permissionLauncher.launch(arrayOf(audioPermission))
+                        }
+                    },
                 )
             }
             composable(
@@ -204,7 +213,7 @@ private fun BottomNavigationBar(
     onLibrary: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().liquidGlass(hazeState, Color(0xFF1A2035).copy(alpha = 0.78f), RoundedCornerShape(24.dp)).padding(horizontal = 8.dp, vertical = 7.dp),
+        modifier = Modifier.fillMaxWidth().liquidGlass(hazeState, MaterialTheme.colorScheme.surface.copy(alpha = 0.82f), RoundedCornerShape(24.dp)).padding(horizontal = 8.dp, vertical = 7.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -221,8 +230,8 @@ private fun NavigationItem(icon: String, label: String, selected: Boolean, modif
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        Text(icon, color = if (selected) Color(0xFFD1D2FF) else Color.White.copy(alpha = 0.62f), fontSize = 19.sp)
-        Text(label, color = if (selected) Color.White else Color.White.copy(alpha = 0.54f), fontSize = 8.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.Bold)
+        Text(icon, color = if (selected) Color(0xFFD1D2FF) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 19.sp)
+        Text(label, color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.54f), fontSize = 8.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.Bold)
     }
 }
 

@@ -15,6 +15,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import android.net.Uri
+import com.aetherwave.data.source.youtube.InnertubeClient
 import com.aetherwave.data.source.youtube.YouTubeMusicSource
 import com.aetherwave.playback.RefreshingResolvingDataSource
 import com.aetherwave.playback.RoutedAudioDataSource
@@ -58,14 +60,15 @@ object PlaybackModule {
     fun provideAudioDataSourceFactory(
         @ApplicationContext context: Context,
         youtubeMusicSource: YouTubeMusicSource,
+        innertubeClient: InnertubeClient,
         cache: Cache,
     ): DataSource.Factory {
         val httpFactory = DefaultHttpDataSource.Factory()
             .setUserAgent("AetherWave/1.0.0 (Android)")
             .setDefaultRequestProperties(
                 mapOf(
-                    "Origin" to "https://www.youtube.com",
-                    "Referer" to "https://www.youtube.com/",
+                    "Origin" to "https://music.youtube.com",
+                    "Referer" to "https://music.youtube.com/",
                 ),
             )
             .setConnectTimeoutMs(15_000)
@@ -73,10 +76,17 @@ object PlaybackModule {
             .setAllowCrossProtocolRedirects(true)
 
         val defaultUpstream = DefaultDataSource.Factory(context, httpFactory)
-        val resolvingFactory = RefreshingResolvingDataSource.Factory(defaultUpstream) { videoUrl, _ ->
+        val resolvingFactory = RefreshingResolvingDataSource.Factory(defaultUpstream) { videoUrl, forceRefresh ->
             // Extractor access is blocking; Media3 invokes this on its loading thread.
             runBlocking(Dispatchers.IO) {
-                youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url
+                val videoId = Uri.parse(videoUrl).getQueryParameter("v")
+                    ?: videoUrl.substringAfterLast('/').substringBefore('?')
+                if (forceRefresh) {
+                    youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url
+                } else {
+                    innertubeClient.playerAudioUrl(videoId)
+                        ?: youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url
+                }
             }
         }
 

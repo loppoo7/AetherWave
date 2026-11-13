@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Slider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -117,8 +118,8 @@ fun NowPlayingScreen(
                 GlassRoundButton("⌄", hazeState, onBack)
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("NOW PLAYING", color = Color.White.copy(alpha = 0.64f), fontSize = 9.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
-                    Text("AETHERWAVE", color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp, letterSpacing = 2.sp)
+                    Text("NOW PLAYING", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f), fontSize = 9.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
+                    Text("AETHERWAVE", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f), fontSize = 11.sp, letterSpacing = 2.sp)
                 }
                 Spacer(Modifier.weight(1f))
                 GlassRoundButton("⋯", hazeState) { }
@@ -153,14 +154,14 @@ fun NowPlayingScreen(
                             )
                             Spacer(Modifier.height(16.dp))
                             Text(formatBadge.orEmpty(), modifier = Modifier
-                                .clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.12f)).padding(horizontal = 13.dp, vertical = 6.dp),
-                                color = Color.White.copy(alpha = 0.86f), fontSize = 9.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
+                                .clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)).padding(horizontal = 13.dp, vertical = 6.dp),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.86f), fontSize = 9.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.height(15.dp))
-                            Text(track.title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold,
+                            Text(track.title, color = MaterialTheme.colorScheme.onBackground, fontSize = 22.sp, fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Text(track.artist, color = Color.White.copy(alpha = 0.66f), fontSize = 14.sp, textAlign = TextAlign.Center)
+                            Text(track.artist, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.66f), fontSize = 14.sp, textAlign = TextAlign.Center)
                         } else {
-                            Text("Choose a track to begin", color = Color.White.copy(alpha = 0.76f), fontSize = 16.sp)
+                            Text("Choose a track to begin", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.76f), fontSize = 16.sp)
                         }
                     }
                 }
@@ -180,14 +181,14 @@ fun NowPlayingScreen(
                     valueRange = 0f..playback.duration.coerceAtLeast(1L).toFloat(),
                     enabled = playback.duration > 0L,
                     colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
+                        thumbColor = MaterialTheme.colorScheme.onBackground,
                         activeTrackColor = Color(0xFFC6C9FF),
-                        inactiveTrackColor = Color.White.copy(alpha = 0.18f),
+                        inactiveTrackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.18f),
                     ),
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(formatTrackDuration(playback.position), color = Color.White.copy(alpha = 0.58f), fontSize = 10.sp)
-                    Text(formatTrackDuration(playback.duration), color = Color.White.copy(alpha = 0.58f), fontSize = 10.sp)
+                    Text(formatTrackDuration(playback.position), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f), fontSize = 10.sp)
+                    Text(formatTrackDuration(playback.duration), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f), fontSize = 10.sp)
                 }
             }
 
@@ -200,7 +201,7 @@ fun NowPlayingScreen(
                     tint = Color(0xFFB8BFFF).copy(alpha = 0.24f),
                     content = {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(if (playback.isPlaying) "Ⅱ" else "▶", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                            Text(if (playback.isPlaying) "Ⅱ" else "▶", color = MaterialTheme.colorScheme.onBackground, fontSize = 26.sp, fontWeight = FontWeight.Bold)
                         }
                     },
                 )
@@ -212,7 +213,7 @@ fun NowPlayingScreen(
                 ActionGlyph(if (state.isDownloading) "…" else "↓", when { track?.isDownloaded == true -> "SAVED"; track?.source?.name == "LOCAL" -> "ON DEVICE"; else -> "DOWNLOAD" }, track?.isDownloaded == true, onDownload)
                 ActionGlyph("≋", if (state.showLyrics) "ARTWORK" else "LYRICS", state.showLyrics, onToggleLyrics)
             }
-            state.message?.let { Text(it, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) }
+            state.message?.let { Text(it, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f), fontSize = 11.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) }
         }
     }
 }
@@ -225,16 +226,16 @@ private fun LyricsPanel(lines: List<LyricLine>, position: Long, isLoading: Boole
         if (lines.isNotEmpty()) listState.animateScrollToItem((activeIndex - 2).coerceAtLeast(0))
     }
     if (isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Finding synchronized lyrics…", color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp) }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Finding synchronized lyrics…", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f), fontSize = 13.sp) }
     } else if (lines.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No synchronized lyrics found for this track.", color = Color.White.copy(alpha = 0.62f), fontSize = 13.sp, textAlign = TextAlign.Center) }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No synchronized lyrics found for this track.", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 13.sp, textAlign = TextAlign.Center) }
     } else {
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(18.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 32.dp)) {
             itemsIndexed(lines) { index, line ->
                 Text(
                     line.text,
                     modifier = Modifier.fillMaxWidth().clickable { onSeek(line.timestampMs) }.padding(horizontal = 12.dp),
-                    color = if (index == activeIndex) Color.White else Color.White.copy(alpha = 0.36f),
+                    color = if (index == activeIndex) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.36f),
                     fontSize = if (index == activeIndex) 24.sp else 18.sp,
                     lineHeight = if (index == activeIndex) 32.sp else 25.sp,
                     fontWeight = if (index == activeIndex) FontWeight.Bold else FontWeight.Medium,
@@ -247,23 +248,23 @@ private fun LyricsPanel(lines: List<LyricLine>, position: Long, isLoading: Boole
 
 @Composable
 private fun GlassRoundButton(text: String, hazeState: HazeState, onClick: () -> Unit) {
-    Box(Modifier.size(42.dp).liquidGlass(hazeState, Color.White.copy(alpha = 0.12f), CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Text(text, color = Color.White, fontSize = 20.sp)
+    Box(Modifier.size(42.dp).liquidGlass(hazeState, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f), CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Text(text, color = MaterialTheme.colorScheme.onBackground, fontSize = 20.sp)
     }
 }
 
 @Composable
 private fun ControlGlyph(text: String, selected: Boolean = false, large: Boolean = false, onClick: () -> Unit) {
-    Box(Modifier.size(if (large) 48.dp else 40.dp).clip(CircleShape).background(if (selected) Color.White.copy(alpha = 0.16f) else Color.Transparent).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Text(text, color = if (selected) Color(0xFFD8D9FF) else Color.White.copy(alpha = 0.84f), fontSize = if (large) 20.sp else 17.sp, fontWeight = FontWeight.SemiBold)
+    Box(Modifier.size(if (large) 48.dp else 40.dp).clip(CircleShape).background(if (selected) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.16f) else Color.Transparent).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Text(text, color = if (selected) Color(0xFFD8D9FF) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.84f), fontSize = if (large) 20.sp else 17.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
 @Composable
 private fun ActionGlyph(text: String, label: String, selected: Boolean, onClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.clickable(onClick = onClick).padding(horizontal = 9.dp, vertical = 5.dp)) {
-        Text(text, color = if (selected) Color(0xFFD8D9FF) else Color.White.copy(alpha = 0.84f), fontSize = 20.sp)
-        Text(label, color = Color.White.copy(alpha = 0.58f), fontSize = 8.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold)
+        Text(text, color = if (selected) Color(0xFFD8D9FF) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.84f), fontSize = 20.sp)
+        Text(label, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f), fontSize = 8.sp, letterSpacing = 1.sp, fontWeight = FontWeight.Bold)
     }
 }
 

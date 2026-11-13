@@ -11,7 +11,8 @@ import com.aetherwave.data.remote.lrclib.LrcLibApi
 import com.aetherwave.data.remote.lrclib.LrcLibTrackResponse
 import com.aetherwave.data.remote.lrclib.LyricsParser
 import com.aetherwave.data.source.local.MediaStoreAudioSource
-import com.aetherwave.data.source.youtube.YouTubeMusicSource
+import com.aetherwave.data.source.youtube.InnertubeClient
+import com.aetherwave.domain.model.MusicHomeFeed
 import com.aetherwave.domain.model.LyricsResult
 import com.aetherwave.domain.model.MusicPlaylist
 import com.aetherwave.domain.model.MusicTrack
@@ -26,43 +27,43 @@ import kotlin.math.abs
 
 @Singleton
 class MusicRepositoryImpl @Inject constructor(
-    private val youtubeMusicSource: YouTubeMusicSource,
+    private val innertubeClient: InnertubeClient,
     private val mediaStoreAudioSource: MediaStoreAudioSource,
     private val trackDao: TrackDao,
     private val playlistDao: PlaylistDao,
     private val lyricsApi: LrcLibApi,
 ) : MusicRepository {
 
-    override suspend fun searchYouTubeMusic(query: String, limit: Int): List<MusicTrack> {
-        return youtubeMusicSource.searchTracks(query, limit)
-            .map { ytTrack ->
-                MusicTrack(
-                    id = "youtube:${ytTrack.id}",
-                    source = com.aetherwave.domain.model.TrackSource.YOUTUBE,
-                    sourceId = ytTrack.id,
-                    title = ytTrack.title,
-                    artist = ytTrack.artist,
-                    durationMs = ytTrack.durationSeconds.coerceAtLeast(0L) * 1_000L,
-                    artworkUri = ytTrack.thumbnailUrl.takeIf(String::isNotBlank),
-                    videoUrl = ytTrack.videoUrl,
-                )
-            }
-            .map { freshTrack ->
-                // Keep user-owned state from Room when a search returns an existing track.
-                trackDao.insertTrackIfMissing(freshTrack.toEntity())
-                val storedTrack = trackDao.getTrack(freshTrack.id)
-                if (storedTrack == null) {
-                    freshTrack
-                } else {
-                    freshTrack.copy(
-                        isLiked = storedTrack.isLiked,
-                        lastPlayedAt = storedTrack.lastPlayedAt,
-                        isDownloaded = storedTrack.isDownloaded,
-                        localFilePath = storedTrack.localFilePath,
-                    )
-                }
-            }
+    override suspend fun getHomeFeed(): MusicHomeFeed {
+        val feed = innertubeClient.homeFeed()
+        suspend fun merge(tracks: List<MusicTrack>): List<MusicTrack> = tracks.map { fresh ->
+            trackDao.insertTrackIfMissing(fresh.toEntity())
+            val stored = trackDao.getTrack(fresh.id)
+            if (stored == null) fresh else fresh.copy(
+                isLiked = stored.isLiked,
+                lastPlayedAt = stored.lastPlayedAt,
+                isDownloaded = stored.isDownloaded,
+                localFilePath = stored.localFilePath,
+            )
+        }
+        return MusicHomeFeed(
+            quickPicks = merge(feed.quickPicks),
+            trending = merge(feed.trending),
+            recommended = merge(feed.recommended),
+        )
     }
+
+    override suspend fun searchYouTubeMusic(query: String, limit: Int): List<MusicTrack> =
+        innertubeClient.searchSongs(query, limit).map { fresh ->
+            trackDao.insertTrackIfMissing(fresh.toEntity())
+            val stored = trackDao.getTrack(fresh.id)
+            if (stored == null) fresh else fresh.copy(
+                isLiked = stored.isLiked,
+                lastPlayedAt = stored.lastPlayedAt,
+                isDownloaded = stored.isDownloaded,
+                localFilePath = stored.localFilePath,
+            )
+        }
 
     override suspend fun scanLocalAudio(): List<MusicTrack> = mediaStoreAudioSource.scanAudio()
 

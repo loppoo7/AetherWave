@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,13 +34,13 @@ fun PlaylistPickerDialog(
                 .padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Add to playlist", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 19.sp)
+            Text("Add to playlist", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 19.sp)
             if (playlists.isEmpty()) {
-                Text("Create a playlist in Library first.", color = Color.White.copy(alpha = 0.68f), fontSize = 13.sp)
+                Text("Create a playlist in Library first.", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontSize = 13.sp)
             } else {
                 playlists.forEach { playlist ->
                     Row(Modifier.fillMaxWidth().clickable { onSelect(playlist) }.padding(vertical = 8.dp)) {
-                        Text(playlist.name, color = Color.White, fontSize = 14.sp)
+                        Text(playlist.name, color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
                     }
                 }
             }

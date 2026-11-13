@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,9 +21,13 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.unit.dp
 import androidx.palette.graphics.Palette
 import dev.chrisbanes.haze.HazeInput
@@ -103,9 +108,12 @@ fun Modifier.liquidGlass(
     specularStrength: Float = 0.58f,
 ): Modifier {
     val safeSpecular = specularStrength.coerceIn(0f, 1f)
-    val style = remember(glassTint, containerShape, safeSpecular) {
+    val darkSurface = MaterialTheme.colorScheme.background.luminance() < 0.45f
+    val baseTint = if (darkSurface) Color(0xFF101827).copy(alpha = 0.54f) else Color.White.copy(alpha = 0.58f)
+    val resolvedTint = lerp(glassTint, baseTint, if (darkSurface) 0.72f else 0.64f)
+    val style = remember(resolvedTint, containerShape, safeSpecular) {
         GlassStyle.regular.then {
-            tint(glassTint)
+            tint(resolvedTint)
             shape(containerShape)
             specularIntensity(safeSpecular)
             ambientResponse(0.18f)
@@ -115,18 +123,30 @@ fun Modifier.liquidGlass(
             }
         }
     }
-    val specularBorder = remember(glassTint) {
+    val specularBorder = remember(darkSurface, resolvedTint) {
         Brush.linearGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.72f),
-                Color.White.copy(alpha = 0.10f),
-                glassTint.copy(alpha = 0.42f),
+            colorStops = arrayOf(
+                0.0f to Color.White.copy(alpha = if (darkSurface) 0.88f else 0.98f),
+                0.18f to Color.White.copy(alpha = if (darkSurface) 0.34f else 0.56f),
+                0.54f to Color.Transparent,
+                1.0f to Color.White.copy(alpha = if (darkSurface) 0.24f else 0.42f),
+            ),
+        )
+    }
+    val innerHighlight = remember(darkSurface) {
+        Brush.verticalGradient(
+            listOf(
+                Color.White.copy(alpha = if (darkSurface) 0.13f else 0.38f),
+                Color.Transparent,
+                Color.Black.copy(alpha = if (darkSurface) 0.12f else 0.025f),
             ),
         )
     }
 
     return this
+        .shadow(if (darkSurface) 18.dp else 10.dp, containerShape, clip = false)
         .clip(containerShape)
+        .background(innerHighlight, containerShape)
         .hazeGlass(
             input = HazeInput.Sources(state),
             style = style,
@@ -134,6 +154,15 @@ fun Modifier.liquidGlass(
         )
         .border(
             border = BorderStroke(width = 1.dp, brush = specularBorder),
+            shape = containerShape,
+        )
+        .border(
+            border = BorderStroke(
+                width = 0.5.dp,
+                brush = Brush.linearGradient(
+                    listOf(Color.White.copy(alpha = 0.22f), Color.Transparent, Color.White.copy(alpha = 0.12f)),
+                ),
+            ),
             shape = containerShape,
         )
 }
@@ -186,12 +215,13 @@ fun DynamicMeshBackground(
         label = "mesh-counter-phase",
     )
 
+    val baseBackground = MaterialTheme.colorScheme.background
     Canvas(modifier = modifier) {
         val width = size.width
         val height = size.height
         val radius = (width * width + height * height).let { kotlin.math.sqrt(it) } * 0.78f
 
-        drawRect(color = Color(0xFF080A14))
+        drawRect(color = baseBackground)
 
         drawRect(
             brush = Brush.radialGradient(

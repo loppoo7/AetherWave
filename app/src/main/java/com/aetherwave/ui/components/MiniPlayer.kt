@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,16 +50,16 @@ fun MiniPlayer(
             AsyncImage(track.artworkUri, contentDescription = null, contentScale = ContentScale.Crop,
                 modifier = Modifier.size(42.dp).clip(RoundedCornerShape(11.dp)))
             Column(Modifier.weight(1f).padding(horizontal = 11.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(track.title, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(track.artist, color = Color.White.copy(alpha = 0.64f), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(track.title, color = MaterialTheme.colorScheme.onBackground, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(track.artist, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Box(Modifier.size(38.dp).clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.10f)).clickable(onClick = onPlayPause), contentAlignment = Alignment.Center) {
-                Text(if (isPlaying) "Ⅱ" else "▶", color = Color.White, fontSize = 18.sp)
+            Box(Modifier.size(38.dp).clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.10f)).clickable(onClick = onPlayPause), contentAlignment = Alignment.Center) {
+                Text(if (isPlaying) "Ⅱ" else "▶", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp)
             }
         }
         Spacer(Modifier.height(8.dp))
         val progress = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
-        Box(Modifier.fillMaxWidth().height(2.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = 0.15f))) {
+        Box(Modifier.fillMaxWidth().height(2.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f))) {
             Box(Modifier.fillMaxWidth(progress).height(2.dp).background(Color(0xFFC6C9FF)))
         }
     }

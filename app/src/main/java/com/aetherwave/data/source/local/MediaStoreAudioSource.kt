@@ -44,7 +44,7 @@ class MediaStoreAudioSource @Inject constructor(
             MediaStore.Audio.Media.DURATION,
             MediaStore.Audio.Media.ALBUM_ID,
         )
-        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
+        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND ${MediaStore.Audio.Media.DURATION} >= 30000"
         val sortOrder = "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC"
         val result = ArrayList<MusicTrack>()
 
@@ -65,7 +65,7 @@ class MediaStoreAudioSource @Inject constructor(
             while (cursor.moveToNext()) {
                 val mediaId = cursor.getLong(idColumn)
                 val duration = cursor.getLong(durationColumn).coerceAtLeast(0L)
-                if (duration == 0L) continue
+                if (duration < 30_000L) continue
 
                 val contentUri = ContentUris.withAppendedId(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
