@@ -23,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import androidx.palette.graphics.Palette
 import dev.chrisbanes.haze.HazeInput
@@ -100,7 +99,7 @@ fun Modifier.liquidGlassSource(state: HazeState): Modifier = hazeSource(state = 
 fun Modifier.liquidGlass(
     state: HazeState,
     glassTint: Color = Color.White.copy(alpha = 0.12f),
-    containerShape: Shape = RoundedCornerShape(28.dp),
+    containerShape: RoundedCornerShape = RoundedCornerShape(28.dp),
     specularStrength: Float = 0.58f,
 ): Modifier {
     val safeSpecular = specularStrength.coerceIn(0f, 1f)

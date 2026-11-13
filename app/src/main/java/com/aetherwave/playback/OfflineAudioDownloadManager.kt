@@ -50,6 +50,7 @@ class OfflineAudioDownloadManager @Inject constructor(
         val safeId = sourceId.replace(Regex("[^A-Za-z0-9._-]"), "_")
         val destination = File(directory, "$safeId.audio")
         val temporary = File(directory, "$safeId.audio.part")
+        val backup = File(directory, "$safeId.audio.bak")
         val dataSource = dataSourceFactory.createDataSource()
         val dataSpec = DataSpec.Builder()
             .setUri(resolverUri)
@@ -57,6 +58,10 @@ class OfflineAudioDownloadManager @Inject constructor(
             .build()
 
         try {
+            // Recover the previous completed download if the app was interrupted mid-replacement.
+            if (!destination.exists() && backup.exists() && !backup.renameTo(destination)) {
+                throw IOException("Unable to restore the previous offline audio file")
+            }
             dataSource.open(dataSpec)
             FileOutputStream(temporary, false).use { output ->
                 val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
@@ -71,24 +76,42 @@ class OfflineAudioDownloadManager @Inject constructor(
             if (!temporary.isFile || temporary.length() == 0L) {
                 throw IOException("The server returned an empty audio stream")
             }
-            if (destination.exists() && !destination.delete()) {
-                throw IOException("Unable to replace the previous offline audio file")
+            // Keep the current offline file intact until the replacement is complete and saved.
+            if (backup.exists() && !backup.delete()) {
+                throw IOException("Unable to clear the previous offline backup")
             }
-            if (!temporary.renameTo(destination)) {
-                temporary.copyTo(destination, overwrite = true)
-                temporary.delete()
+            val hadPreviousDownload = destination.isFile
+            if (hadPreviousDownload && !destination.renameTo(backup)) {
+                throw IOException("Unable to protect the previous offline audio file")
             }
 
-            trackDao.insertTrackIfMissing(track.toEntity())
-            trackDao.updateDownloadState(track.id, true, destination.absolutePath)
+            try {
+                if (!temporary.renameTo(destination)) {
+                    temporary.copyTo(destination, overwrite = false)
+                    temporary.delete()
+                }
+                if (!destination.isFile || destination.length() == 0L) {
+                    throw IOException("The downloaded audio file is empty")
+                }
+
+                trackDao.insertTrackIfMissing(track.toEntity())
+                trackDao.updateDownloadState(track.id, true, destination.absolutePath)
+            } catch (installError: Exception) {
+                destination.delete()
+                if (hadPreviousDownload && backup.exists() && !backup.renameTo(destination)) {
+                    installError.addSuppressed(IOException("Unable to restore the previous offline audio file"))
+                }
+                throw installError
+            }
+
+            // A failed cleanup must not invalidate the newly saved download.
+            if (backup.exists()) backup.delete()
             destination
         } catch (cancelled: CancellationException) {
             temporary.delete()
-            destination.delete()
             throw cancelled
         } catch (error: Exception) {
             temporary.delete()
-            destination.delete()
             throw IOException("Unable to download '${track.title}' for offline playback", error)
         } finally {
             runCatching { dataSource.close() }

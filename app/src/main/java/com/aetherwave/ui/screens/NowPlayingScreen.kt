@@ -51,6 +51,7 @@ import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
+import coil3.request.allowHardware
 import coil3.toBitmap
 import com.aetherwave.core.designsystem.components.ArtworkPalette
 import com.aetherwave.core.designsystem.components.DynamicMeshBackground

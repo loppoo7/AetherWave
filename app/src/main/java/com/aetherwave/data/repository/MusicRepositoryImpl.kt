@@ -47,7 +47,21 @@ class MusicRepositoryImpl @Inject constructor(
                     videoUrl = ytTrack.videoUrl,
                 )
             }
-            .also { tracks -> tracks.forEach { trackDao.insertTrackIfMissing(it.toEntity()) } }
+            .map { freshTrack ->
+                // Keep user-owned state from Room when a search returns an existing track.
+                trackDao.insertTrackIfMissing(freshTrack.toEntity())
+                val storedTrack = trackDao.getTrack(freshTrack.id)
+                if (storedTrack == null) {
+                    freshTrack
+                } else {
+                    freshTrack.copy(
+                        isLiked = storedTrack.isLiked,
+                        lastPlayedAt = storedTrack.lastPlayedAt,
+                        isDownloaded = storedTrack.isDownloaded,
+                        localFilePath = storedTrack.localFilePath,
+                    )
+                }
+            }
     }
 
     override suspend fun scanLocalAudio(): List<MusicTrack> = mediaStoreAudioSource.scanAudio()
