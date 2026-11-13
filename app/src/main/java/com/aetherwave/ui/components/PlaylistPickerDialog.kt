@@ -30,7 +30,7 @@ fun PlaylistPickerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier.fillMaxWidth()
-                .liquidGlass(hazeState, Color(0xFF20263B).copy(alpha = 0.96f), RoundedCornerShape(28.dp))
+                .liquidGlass(hazeState, MaterialTheme.colorScheme.surface.copy(alpha = 0.96f), RoundedCornerShape(28.dp))
                 .padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {

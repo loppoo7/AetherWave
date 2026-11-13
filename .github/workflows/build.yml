@@ -40,7 +40,7 @@ jobs:
       - name: Package v1.0.0 source archive
         run: |
           mkdir -p /tmp/aetherwave-archive/AetherWave
-          rsync -a --exclude=".git" --exclude="app/build" --exclude=".gradle" ./ /tmp/aetherwave-archive/AetherWave/
+          rsync -a --exclude=".git" --exclude="build" --exclude=".gradle" --exclude=".kotlin" --exclude=".idea" --exclude="local.properties" ./ /tmp/aetherwave-archive/AetherWave/
           cd /tmp/aetherwave-archive
           zip -qr "$GITHUB_WORKSPACE/AetherWave-v1.0.0.zip" AetherWave
 

@@ -112,6 +112,8 @@ fun AetherWaveApp(darkTheme: Boolean, onToggleTheme: () -> Unit) {
                     state = homeState,
                     hazeState = hazeState,
                     onPlayQueue = playerViewModel::playQueue,
+                    playlists = libraryState.playlists,
+                    onAddToPlaylist = libraryViewModel::addTrack,
                     onOpenLibrary = { tab -> navController.navigate("library/$tab") },
                     darkTheme = darkTheme,
                     onToggleTheme = onToggleTheme,

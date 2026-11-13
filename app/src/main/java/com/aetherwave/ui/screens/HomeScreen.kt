@@ -21,9 +21,15 @@ import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +41,8 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.aetherwave.core.designsystem.components.liquidGlass
 import com.aetherwave.domain.model.MusicTrack
+import com.aetherwave.domain.model.MusicPlaylist
+import com.aetherwave.ui.components.PlaylistPickerDialog
 import com.aetherwave.ui.components.TrackRow
 import com.aetherwave.ui.viewmodel.HomeUiState
 import dev.chrisbanes.haze.HazeState
@@ -47,8 +55,11 @@ fun HomeScreen(
     onToggleTheme: () -> Unit,
     onOpenSearch: () -> Unit,
     onPlayQueue: (List<MusicTrack>, Int) -> Unit,
+    playlists: List<MusicPlaylist>,
+    onAddToPlaylist: (String, MusicTrack) -> Unit,
     onOpenLibrary: (Int) -> Unit,
 ) {
+    var selectedTrack by remember { mutableStateOf<MusicTrack?>(null) }
     val foreground = MaterialTheme.colorScheme.onBackground
     val muted = foreground.copy(alpha = 0.62f)
     LazyColumn(
@@ -106,6 +117,8 @@ fun HomeScreen(
                             foreground = foreground,
                             muted = muted,
                             onClick = { onPlayQueue(state.quickPicks, state.quickPicks.indexOf(track)) },
+                            onAddToPlaylist = { selectedTrack = track },
+                            onPlayNow = { onPlayQueue(listOf(track), 0) },
                         )
                     }
                 }
@@ -158,6 +171,17 @@ fun HomeScreen(
             item { Text(message, color = MaterialTheme.colorScheme.error, fontSize = 11.sp) }
         }
     }
+    selectedTrack?.let { track ->
+        PlaylistPickerDialog(
+            playlists = playlists,
+            hazeState = hazeState,
+            onDismiss = { selectedTrack = null },
+            onSelect = { playlist ->
+                onAddToPlaylist(playlist.id, track)
+                selectedTrack = null
+            },
+        )
+    }
 }
 
 @Composable
@@ -166,7 +190,10 @@ private fun QuickPickItem(
     foreground: androidx.compose.ui.graphics.Color,
     muted: androidx.compose.ui.graphics.Color,
     onClick: () -> Unit,
+    onAddToPlaylist: () -> Unit,
+    onPlayNow: () -> Unit,
 ) {
+    var menuExpanded by remember(track.id) { mutableStateOf(false) }
     Row(
         modifier = Modifier.width(258.dp).clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
@@ -182,7 +209,19 @@ private fun QuickPickItem(
             Text(track.title, color = foreground, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(track.artist, color = muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Text("▶", color = muted, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 3.dp))
+        Box {
+            Text("⋮", color = muted, fontSize = 19.sp, modifier = Modifier.clickable { menuExpanded = true }.padding(horizontal = 5.dp, vertical = 2.dp))
+            DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                DropdownMenuItem(
+                    text = { Text("Play now") },
+                    onClick = { menuExpanded = false; onPlayNow() },
+                )
+                DropdownMenuItem(
+                    text = { Text("Add to playlist") },
+                    onClick = { menuExpanded = false; onAddToPlaylist() },
+                )
+            }
+        }
     }
 }
 

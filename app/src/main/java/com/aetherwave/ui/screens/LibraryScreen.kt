@@ -143,7 +143,7 @@ fun LibraryScreen(
 private fun CreatePlaylistDialog(hazeState: HazeState, onDismiss: () -> Unit, onCreate: (String) -> Unit) {
     var name by remember { mutableStateOf("") }
     Dialog(onDismissRequest = onDismiss) {
-        Column(Modifier.fillMaxWidth().liquidGlass(hazeState, Color(0xFF20263B).copy(alpha = 0.97f), RoundedCornerShape(26.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.fillMaxWidth().liquidGlass(hazeState, MaterialTheme.colorScheme.surface.copy(alpha = 0.97f), RoundedCornerShape(26.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text("New playlist", color = MaterialTheme.colorScheme.onBackground, fontSize = 19.sp, fontWeight = FontWeight.Bold)
             BasicTextField(
                 value = name,

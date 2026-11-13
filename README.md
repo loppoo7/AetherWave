@@ -27,7 +27,7 @@ AetherWave is an Android music-player foundation built with Kotlin, Jetpack Comp
 
 ### Repository
 
-`MusicRepository` / `MusicRepositoryImpl` combine YouTube Music search, MediaStore scan, Room favorites/history/playlists/downloads, and LRCLIB lyrics lookup. UI code can depend on the domain interface rather than data-layer classes.
+`MusicRepository` / `MusicRepositoryImpl` combine YouTube Music Innertube `WEB_REMIX` Home and song-only search, MediaStore scan for the Library Local Files tab, Room favorites/history/playlists/downloads, and LRCLIB lyrics lookup. NewPipeExtractor is reserved for stream URL/cipher fallback during playback; it is not used for Home or Search discovery. UI code can depend on the domain interface rather than data-layer classes.
 
 ## Runtime permission for local audio
 
@@ -64,11 +64,11 @@ The LRC parser was compiled independently with a minimal Compose annotation stub
 
 ## v1.0.0 — UI and navigation layer
 
-The v1.0.0 UI layer builds on the v0.3.0 playback, local database, cache, MediaStore, and LRCLIB modules.
+The v1.0.0 UI layer builds on the v0.3.0 playback, local database, cache, MediaStore, and LRCLIB modules. The app version remains `1.0.0`; these are updates to the existing release line, not a 2.0.0 version bump.
 
-- **Home:** recently played, liked-song and on-device audio shortcuts, plus a MediaStore scan action.
+- **Home:** YouTube Music `FEmusic_home` feed with Quick Picks, trending and recommended tracks; local MediaStore files are not shown on Home.
 - **Search:** YouTube Music results with a 400 ms debounce and playlist insertion.
-- **Library:** local playlists, on-device audio, completed downloads, and liked songs.
+- **Library:** local playlists, a dedicated Local Files tab (tracks shorter than 30 seconds are filtered out), completed downloads, and liked songs.
 - **Now Playing:** artwork-derived palette background, format badge, seek control, shuffle/repeat, like, offline download, and synchronized-lyrics view with tap-to-seek and active-line auto-scroll.
 - **Persistent mini-player and floating navigation:** glass surfaces remain above scrollable screen content.
 - **Permissions:** Android 13+ requests `READ_MEDIA_AUDIO` and `POST_NOTIFICATIONS`; Android 8–12 requests `READ_EXTERNAL_STORAGE`. The Home scan action can request audio access again after a denial.

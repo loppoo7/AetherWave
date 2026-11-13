@@ -81,12 +81,14 @@ object PlaybackModule {
             runBlocking(Dispatchers.IO) {
                 val videoId = Uri.parse(videoUrl).getQueryParameter("v")
                     ?: videoUrl.substringAfterLast('/').substringBefore('?')
-                if (forceRefresh) {
-                    youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url
+                val directInnertubeUrl = if (forceRefresh) {
+                    null
                 } else {
-                    innertubeClient.playerAudioUrl(videoId)
-                        ?: youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url
+                    // Innertube can reject a request independently of the stream URL.
+                    // Fall back to NewPipe for transient API errors and cipher-only formats.
+                    runCatching { innertubeClient.playerAudioUrl(videoId) }.getOrNull()
                 }
+                directInnertubeUrl ?: youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url
             }
         }
 
