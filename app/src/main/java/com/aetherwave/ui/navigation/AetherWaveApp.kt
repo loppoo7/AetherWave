@@ -149,6 +149,7 @@ fun AetherWaveApp(
                     state = searchState,
                     playlists = libraryState.playlists,
                     hazeState = hazeState,
+                    playbackError = playerState.playback.errorMessage,
                     onQueryChanged = searchViewModel::onQueryChanged,
                     onPlayQueue = playerViewModel::playQueue,
                     onAddToPlaylist = libraryViewModel::addTrack,

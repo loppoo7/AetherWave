@@ -213,6 +213,9 @@ fun NowPlayingScreen(
                 ActionGlyph(if (state.isDownloading) "…" else "↓", when { track?.isDownloaded == true -> "SAVED"; track?.source?.name == "LOCAL" -> "ON DEVICE"; else -> "DOWNLOAD" }, track?.isDownloaded == true, onDownload)
                 ActionGlyph("≋", if (state.showLyrics) "ARTWORK" else "LYRICS", state.showLyrics, onToggleLyrics)
             }
+            state.playback.errorMessage?.let {
+                Text(it, color = Color(0xFFFFB7B7), fontSize = 11.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            }
             state.message?.let { Text(it, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f), fontSize = 11.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) }
         }
     }

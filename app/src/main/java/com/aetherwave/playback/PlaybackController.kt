@@ -43,20 +43,33 @@ class PlaybackController @Inject constructor(
     @Synchronized
     fun connect() {
         if (controller != null || controllerFuture != null) return
-        val token = SessionToken(context, ComponentName(context, AetherWavePlaybackService::class.java))
-        val future = MediaController.Builder(context, token).buildAsync()
-        controllerFuture = future
-        future.addListener({
-            runCatching { future.get() }.onSuccess { mediaController ->
-                controller = mediaController
-                mediaController.addListener(playerListener)
-                publish(mediaController)
-                startPositionUpdates()
-            }.onFailure { error ->
-                mutableState.value = mutableState.value.copy(errorMessage = error.message ?: "Unable to connect playback service")
-                controllerFuture = null
-            }
-        }, java.util.concurrent.Executor { command -> scope.launch { command.run() } })
+        try {
+            val token = SessionToken(context, ComponentName(context, AetherWavePlaybackService::class.java))
+            val future = MediaController.Builder(context, token).buildAsync()
+            controllerFuture = future
+            future.addListener({
+                runCatching { future.get() }.onSuccess { mediaController ->
+                    controller = mediaController
+                    mediaController.addListener(playerListener)
+                    publish(mediaController)
+                    startPositionUpdates()
+                }.onFailure { error ->
+                    mutableState.value = mutableState.value.copy(
+                        isPlaying = false,
+                        isBuffering = false,
+                        errorMessage = error.localizedMessage ?: "Unable to connect playback service",
+                    )
+                    controllerFuture = null
+                }
+            }, java.util.concurrent.Executor { command -> scope.launch { command.run() } })
+        } catch (error: Exception) {
+            controllerFuture = null
+            mutableState.value = mutableState.value.copy(
+                isPlaying = false,
+                isBuffering = false,
+                errorMessage = error.localizedMessage ?: "Unable to connect playback service",
+            )
+        }
     }
 
     fun play(track: YouTubeTrack) {
@@ -75,10 +88,12 @@ class PlaybackController @Inject constructor(
 
     fun play(track: MusicTrack) {
         trackRegistry[track.id] = track
-        connect()
         scope.launch {
             try {
-                val active = awaitController() ?: throw IllegalStateException("Playback service is unavailable")
+                connect()
+                val active = awaitController() ?: throw IllegalStateException(
+                    mutableState.value.errorMessage ?: "Playback service is unavailable",
+                )
                 val item = TrackMediaItem.from(track)
                 active.setMediaItem(item)
                 active.prepare()
@@ -99,10 +114,12 @@ class PlaybackController @Inject constructor(
     fun playMusicQueue(tracks: List<MusicTrack>, startIndex: Int = 0) {
         if (tracks.isEmpty()) return
         tracks.forEach { trackRegistry[it.id] = it }
-        connect()
         scope.launch {
             try {
-                val active = awaitController() ?: throw IllegalStateException("Playback service is unavailable")
+                connect()
+                val active = awaitController() ?: throw IllegalStateException(
+                    mutableState.value.errorMessage ?: "Playback service is unavailable",
+                )
                 val mediaItems = tracks.map(TrackMediaItem::from)
                 require(mediaItems.isNotEmpty()) { "No playable tracks in this queue" }
                 active.setMediaItems(mediaItems, startIndex.coerceIn(mediaItems.indices), 0L)
@@ -150,6 +167,7 @@ class PlaybackController @Inject constructor(
     private suspend fun awaitController(): MediaController? {
         repeat(50) {
             controller?.let { return it }
+            if (controllerFuture == null && mutableState.value.errorMessage != null) return null
             delay(100)
         }
         return controller

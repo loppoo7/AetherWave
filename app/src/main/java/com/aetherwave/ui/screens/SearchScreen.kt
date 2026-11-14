@@ -43,6 +43,7 @@ fun SearchScreen(
     state: SearchUiState,
     playlists: List<MusicPlaylist>,
     hazeState: HazeState,
+    playbackError: String? = null,
     onQueryChanged: (String) -> Unit,
     onPlayQueue: (List<MusicTrack>, Int) -> Unit,
     onAddToPlaylist: (String, MusicTrack) -> Unit,
@@ -82,6 +83,7 @@ fun SearchScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { CircularProgressIndicator(color = Color(0xFFC6C9FF), strokeWidth = 2.dp) }
         }
         state.error?.let { Text(it, color = Color(0xFFFFB7B7), fontSize = 12.sp) }
+        playbackError?.let { Text("Playback: $it", color = Color(0xFFFFB7B7), fontSize = 12.sp) }
         if (state.hasSearched && !state.isLoading && state.error == null && state.results.isEmpty()) {
             Text("No tracks found. Try another title or artist.", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 13.sp)
         }
