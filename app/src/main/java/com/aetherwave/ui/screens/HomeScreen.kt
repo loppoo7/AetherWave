@@ -51,8 +51,7 @@ import dev.chrisbanes.haze.HazeState
 fun HomeScreen(
     state: HomeUiState,
     hazeState: HazeState,
-    darkTheme: Boolean,
-    onToggleTheme: () -> Unit,
+    onOpenSettings: () -> Unit,
     onOpenSearch: () -> Unit,
     onPlayQueue: (List<MusicTrack>, Int) -> Unit,
     playlists: List<MusicPlaylist>,
@@ -80,10 +79,10 @@ fun HomeScreen(
                     Text("Your sound, flowing.", color = foreground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 Text(
-                    if (darkTheme) "☀" else "☾",
+                    "⚙",
                     color = foreground,
-                    fontSize = 22.sp,
-                    modifier = Modifier.clip(RoundedCornerShape(14.dp)).clickable(onClick = onToggleTheme).padding(9.dp),
+                    fontSize = 21.sp,
+                    modifier = Modifier.clip(RoundedCornerShape(14.dp)).clickable(onClick = onOpenSettings).padding(9.dp),
                 )
                 Text(
                     "⌕",

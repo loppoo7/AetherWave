@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -39,6 +40,9 @@ import dev.chrisbanes.haze.glass.hazeGlass
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+/** Liquid Glass is opt-in; standard surfaces are used unless the user enables it. */
+val LocalLiquidGlassEnabled = staticCompositionLocalOf { false }
 
 @Immutable
 data class ArtworkPalette(
@@ -109,6 +113,16 @@ fun Modifier.liquidGlass(
 ): Modifier {
     val safeSpecular = specularStrength.coerceIn(0f, 1f)
     val darkSurface = MaterialTheme.colorScheme.background.luminance() < 0.45f
+    if (!LocalLiquidGlassEnabled.current) {
+        return this
+            .shadow(4.dp, containerShape, clip = false)
+            .clip(containerShape)
+            .background(MaterialTheme.colorScheme.surface, containerShape)
+            .border(
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f)),
+                containerShape,
+            )
+    }
     val baseTint = if (darkSurface) Color(0xFF101827).copy(alpha = 0.54f) else Color.White.copy(alpha = 0.58f)
     val resolvedTint = lerp(glassTint, baseTint, if (darkSurface) 0.72f else 0.64f)
     val style = remember(resolvedTint, containerShape, safeSpecular) {

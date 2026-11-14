@@ -24,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.background
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -43,6 +45,7 @@ import androidx.navigation.navArgument
 import com.aetherwave.core.designsystem.components.ArtworkPalette
 import com.aetherwave.core.designsystem.components.DynamicMeshBackground
 import com.aetherwave.core.designsystem.components.liquidGlass
+import com.aetherwave.core.designsystem.components.LocalLiquidGlassEnabled
 import com.aetherwave.core.designsystem.components.liquidGlassSource
 import com.aetherwave.core.designsystem.components.rememberLiquidGlassState
 import androidx.core.content.ContextCompat
@@ -51,6 +54,7 @@ import com.aetherwave.ui.screens.HomeScreen
 import com.aetherwave.ui.screens.LibraryScreen
 import com.aetherwave.ui.screens.NowPlayingScreen
 import com.aetherwave.ui.screens.SearchScreen
+import com.aetherwave.ui.screens.SettingsScreen
 import com.aetherwave.ui.viewmodel.HomeViewModel
 import com.aetherwave.ui.viewmodel.LibraryViewModel
 import com.aetherwave.ui.viewmodel.MainPlayerViewModel
@@ -58,7 +62,13 @@ import com.aetherwave.ui.viewmodel.SearchViewModel
 import androidx.compose.runtime.collectAsState
 
 @Composable
-fun AetherWaveApp(darkTheme: Boolean, onToggleTheme: () -> Unit) {
+fun AetherWaveApp(
+    darkTheme: Boolean,
+    themeMode: String,
+    onThemeModeChanged: (String) -> Unit,
+    liquidGlassEnabled: Boolean,
+    onLiquidGlassChanged: (Boolean) -> Unit,
+) {
     val navController = rememberNavController()
     val hazeState = rememberLiquidGlassState()
     val playerViewModel: MainPlayerViewModel = hiltViewModel()
@@ -97,11 +107,16 @@ fun AetherWaveApp(darkTheme: Boolean, onToggleTheme: () -> Unit) {
         }
     }
 
+    CompositionLocalProvider(LocalLiquidGlassEnabled provides liquidGlassEnabled) {
     Box(Modifier.fillMaxSize()) {
-        DynamicMeshBackground(
-            palette = ArtworkPalette.Default,
-            modifier = Modifier.fillMaxSize().liquidGlassSource(hazeState),
-        )
+        if (liquidGlassEnabled) {
+            DynamicMeshBackground(
+                palette = ArtworkPalette.Default,
+                modifier = Modifier.fillMaxSize().liquidGlassSource(hazeState),
+            )
+        } else {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+        }
         NavHost(
             navController = navController,
             startDestination = "home",
@@ -115,9 +130,17 @@ fun AetherWaveApp(darkTheme: Boolean, onToggleTheme: () -> Unit) {
                     playlists = libraryState.playlists,
                     onAddToPlaylist = libraryViewModel::addTrack,
                     onOpenLibrary = { tab -> navController.navigate("library/$tab") },
-                    darkTheme = darkTheme,
-                    onToggleTheme = onToggleTheme,
+                    onOpenSettings = { navController.navigate("settings") },
                     onOpenSearch = { navController.navigate("search") { launchSingleTop = true } },
+                )
+            }
+            composable("settings") {
+                SettingsScreen(
+                    themeMode = themeMode,
+                    onThemeModeChanged = onThemeModeChanged,
+                    liquidGlassEnabled = liquidGlassEnabled,
+                    onLiquidGlassChanged = onLiquidGlassChanged,
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable("search") {
@@ -204,6 +227,7 @@ fun AetherWaveApp(darkTheme: Boolean, onToggleTheme: () -> Unit) {
             }
         }
     }
+    }
 }
 
 @Composable
@@ -221,19 +245,26 @@ private fun BottomNavigationBar(
     ) {
         NavigationItem("⌂", "HOME", selectedRoute == "home", Modifier.weight(1f), onHome)
         NavigationItem("⌕", "SEARCH", selectedRoute == "search", Modifier.weight(1f), onSearch)
-        NavigationItem("♫", "LIBRARY", selectedRoute.startsWith("library"), Modifier.weight(1f), onLibrary)
+        NavigationItem("▦", "LIBRARY", selectedRoute.startsWith("library"), Modifier.weight(1f), onLibrary)
     }
 }
 
 @Composable
 private fun NavigationItem(icon: String, label: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Column(
-        modifier = modifier.clickable(onClick = onClick).padding(vertical = 3.dp),
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f) else Color.Transparent,
+                RoundedCornerShape(18.dp),
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        Text(icon, color = if (selected) Color(0xFFD1D2FF) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 19.sp)
-        Text(label, color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.54f), fontSize = 8.sp, letterSpacing = 1.2.sp, fontWeight = FontWeight.Bold)
+        Text(icon, color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 19.sp)
+        Text(label, color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.54f), fontSize = 9.sp, letterSpacing = 0.8.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 

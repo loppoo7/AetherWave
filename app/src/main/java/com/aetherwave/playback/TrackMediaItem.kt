@@ -16,6 +16,9 @@ object TrackMediaItem {
         return MediaItem.Builder()
             .setMediaId("youtube:${track.id}")
             .setUri(uri)
+            // The custom aetherwave:// URI has no file extension; declare progressive audio
+            // explicitly so DefaultMediaSourceFactory does not fail to infer a source type.
+            .setMimeType("audio/mp4")
             .setCustomCacheKey(youtubeCacheKey(track.id))
             .setMediaMetadata(
                 MediaMetadata.Builder()
@@ -31,9 +34,7 @@ object TrackMediaItem {
         val savedFile = track.localFilePath?.let { File(it) }?.takeIf { it.isFile && it.length() > 0L }
         val uri = when {
             savedFile != null -> Uri.fromFile(savedFile)
-            track.source == TrackSource.YOUTUBE -> youtubeResolverUri(
-                requireNotNull(track.videoUrl) { "YouTube track is missing its canonical video URL" },
-            )
+            track.source == TrackSource.YOUTUBE -> youtubeResolverUri(canonicalYouTubeUrl(track))
             else -> Uri.parse(
                 requireNotNull(track.mediaUri) { "Local track is missing its MediaStore content URI" },
             )
@@ -42,6 +43,12 @@ object TrackMediaItem {
         val builder = MediaItem.Builder()
             .setMediaId(track.id)
             .setUri(uri)
+            .apply {
+                if (track.source == TrackSource.YOUTUBE && savedFile == null) {
+                    // The resolver swaps this URI for a signed direct audio URL at load time.
+                    setMimeType("audio/mp4")
+                }
+            }
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(track.title)
@@ -54,6 +61,22 @@ object TrackMediaItem {
             builder.setCustomCacheKey(youtubeCacheKey(track.sourceId))
         }
         return builder.build()
+    }
+
+    /**
+     * Search results from older database rows may not contain videoUrl. Recover it from the
+     * stable YouTube video ID instead of throwing while the user taps a search result.
+     */
+    private fun canonicalYouTubeUrl(track: MusicTrack): String {
+        val candidate = track.videoUrl?.takeIf { it.startsWith("https://") }
+            ?: "https://www.youtube.com/watch?v=${track.sourceId}"
+        val parsed = Uri.parse(candidate)
+        val videoId = parsed.getQueryParameter("v")
+            ?: candidate.substringAfterLast('/').substringBefore('?')
+        require(videoId.matches(Regex("[A-Za-z0-9_-]{11}"))) {
+            "This YouTube result has an invalid video ID"
+        }
+        return "https://www.youtube.com/watch?v=$videoId"
     }
 
     fun youtubeCacheKey(sourceId: String): String = "youtube:$sourceId"

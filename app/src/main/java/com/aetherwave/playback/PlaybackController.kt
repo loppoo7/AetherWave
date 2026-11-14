@@ -12,6 +12,7 @@ import com.aetherwave.data.source.youtube.YouTubeTrack
 import com.aetherwave.domain.model.MusicTrack
 import com.aetherwave.domain.model.TrackSource
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -76,10 +77,22 @@ class PlaybackController @Inject constructor(
         trackRegistry[track.id] = track
         connect()
         scope.launch {
-            val active = awaitController() ?: return@launch
-            active.setMediaItem(TrackMediaItem.from(track))
-            active.prepare()
-            active.play()
+            try {
+                val active = awaitController() ?: throw IllegalStateException("Playback service is unavailable")
+                val item = TrackMediaItem.from(track)
+                active.setMediaItem(item)
+                active.prepare()
+                active.play()
+                mutableState.value = mutableState.value.copy(errorMessage = null)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                mutableState.value = mutableState.value.copy(
+                    isPlaying = false,
+                    isBuffering = false,
+                    errorMessage = error.localizedMessage ?: "Unable to start this track",
+                )
+            }
         }
     }
 
@@ -88,10 +101,23 @@ class PlaybackController @Inject constructor(
         tracks.forEach { trackRegistry[it.id] = it }
         connect()
         scope.launch {
-            val active = awaitController() ?: return@launch
-            active.setMediaItems(tracks.map { TrackMediaItem.from(it) }, startIndex.coerceIn(tracks.indices), 0L)
-            active.prepare()
-            active.play()
+            try {
+                val active = awaitController() ?: throw IllegalStateException("Playback service is unavailable")
+                val mediaItems = tracks.map(TrackMediaItem::from)
+                require(mediaItems.isNotEmpty()) { "No playable tracks in this queue" }
+                active.setMediaItems(mediaItems, startIndex.coerceIn(mediaItems.indices), 0L)
+                active.prepare()
+                active.play()
+                mutableState.value = mutableState.value.copy(errorMessage = null)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                mutableState.value = mutableState.value.copy(
+                    isPlaying = false,
+                    isBuffering = false,
+                    errorMessage = error.localizedMessage ?: "Unable to start this queue",
+                )
+            }
         }
     }
 
@@ -132,7 +158,11 @@ class PlaybackController @Inject constructor(
     private val playerListener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) = publish(player)
         override fun onPlayerError(error: PlaybackException) {
-            mutableState.value = mutableState.value.copy(errorMessage = error.message ?: "Playback failed")
+            mutableState.value = mutableState.value.copy(
+                isPlaying = false,
+                isBuffering = false,
+                errorMessage = error.message ?: "Playback failed",
+            )
         }
     }
 
