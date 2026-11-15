@@ -7,6 +7,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSessionService
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -27,10 +28,10 @@ class AetherWavePlaybackService : MediaSessionService() {
         super.onCreate()
         // High importance keeps the playback notification at the top of the shade and lock screen.
         // A new channel id is used so the setting also applies to installs that already have the old channel.
+        createPlaybackChannel()
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this)
                 .setChannelId(PLAYBACK_CHANNEL_ID)
-                .setChannelImportance(NotificationManager.IMPORTANCE_HIGH)
                 .setNotificationId(PLAYBACK_NOTIFICATION_ID)
                 .build(),
         )
@@ -44,6 +45,19 @@ class AetherWavePlaybackService : MediaSessionService() {
         if (mediaSession == null) {
             mediaSession = MediaSession.Builder(this, player).build()
         }
+    }
+
+    private fun createPlaybackChannel() {
+        val manager = getSystemService(NotificationManager::class.java) ?: return
+        val channel = NotificationChannel(
+            PLAYBACK_CHANNEL_ID,
+            "Music playback",
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            description = "Shows the song that is playing, with playback controls"
+            setShowBadge(false)
+        }
+        manager.createNotificationChannel(channel)
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession

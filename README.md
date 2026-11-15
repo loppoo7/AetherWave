@@ -145,3 +145,8 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Persistent playback notification** uses a high-importance channel, so it appears at the top of the notification shade. Android may still place media controls in its own media panel.
 - **In-app messages** return to their original place at the bottom of Now Playing.
+
+## 1.7
+
+- **Build fixes.** The playback notification channel is created in code with high importance. The duplicate import in Settings is removed.
+- **Performance.** Release builds use R8 code shrinking and resource shrinking. Test performance on the release APK, since the debug APK is always slower.
