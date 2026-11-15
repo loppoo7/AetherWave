@@ -6,8 +6,8 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.ResolvingDataSource
+import androidx.media3.datasource.TransferListener
 import java.io.IOException
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Resolves aetherwave://track items at load time and retries a single HTTP 403 with a fresh URL.
@@ -20,24 +20,33 @@ class RefreshingResolvingDataSource(
     private val streamUrlProvider: (String, Boolean) -> String,
 ) : DataSource {
     private var delegate: ResolvingDataSource? = null
-    private var currentSpec: DataSpec? = null
-    private val transferListeners = mutableListOf<androidx.media3.datasource.TransferListener>()
+    private val transferListeners = mutableListOf<TransferListener>()
 
-    override fun addTransferListener(transferListener: androidx.media3.datasource.TransferListener) {
+    override fun addTransferListener(transferListener: TransferListener) {
         transferListeners += transferListener
     }
 
     @Throws(IOException::class)
     override fun open(dataSpec: DataSpec): Long {
-        currentSpec = dataSpec
-        delegate = newResolvingDataSource(forceRefresh = false)
+        closeDelegate()
+        val first = newResolvingDataSource(forceRefresh = false)
+        delegate = first
         return try {
-            delegate!!.open(dataSpec)
+            first.open(dataSpec)
         } catch (error: HttpDataSource.InvalidResponseCodeException) {
+            closeDelegate()
             if (error.responseCode != 403) throw error
-            runCatching { delegate?.close() }
-            delegate = newResolvingDataSource(forceRefresh = true)
-            delegate!!.open(dataSpec)
+            val refreshed = newResolvingDataSource(forceRefresh = true)
+            delegate = refreshed
+            try {
+                refreshed.open(dataSpec)
+            } catch (retryError: IOException) {
+                closeDelegate()
+                throw retryError
+            }
+        } catch (error: IOException) {
+            closeDelegate()
+            throw error
         }
     }
 
@@ -48,9 +57,12 @@ class RefreshingResolvingDataSource(
     override fun getResponseHeaders(): Map<String, List<String>> = delegate?.responseHeaders.orEmpty()
 
     override fun close() {
+        closeDelegate()
+    }
+
+    private fun closeDelegate() {
         runCatching { delegate?.close() }
         delegate = null
-        currentSpec = null
     }
 
     private fun newResolvingDataSource(forceRefresh: Boolean): ResolvingDataSource {

@@ -24,6 +24,7 @@ data class MusicTrack(
     val lastPlayedAt: Long? = null,
     val isDownloaded: Boolean = false,
     val localFilePath: String? = null,
+    val playCount: Int = 0,
 )
 
 @Immutable

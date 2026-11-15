@@ -44,7 +44,7 @@ fun PlaylistPickerDialog(
                     }
                 }
             }
-            Text("CLOSE", modifier = Modifier.clickable(onClick = onDismiss).padding(top = 6.dp), color = Color(0xFFC6C9FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("CLOSE", modifier = Modifier.clickable(onClick = onDismiss).padding(top = 6.dp), color = MaterialTheme.colorScheme.primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

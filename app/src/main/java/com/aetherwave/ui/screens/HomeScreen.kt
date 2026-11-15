@@ -59,6 +59,7 @@ fun HomeScreen(
     onOpenLibrary: (Int) -> Unit,
 ) {
     var selectedTrack by remember { mutableStateOf<MusicTrack?>(null) }
+    val greeting = remember { greetingForNow() }
     val foreground = MaterialTheme.colorScheme.onBackground
     val muted = foreground.copy(alpha = 0.62f)
     LazyColumn(
@@ -76,7 +77,7 @@ fun HomeScreen(
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text("AETHERWAVE", color = muted, fontSize = 9.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
-                    Text("Your sound, flowing.", color = foreground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(greeting, color = foreground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 Text(
                     "⚙",
@@ -270,4 +271,11 @@ private fun SectionTitle(
 @Composable
 private fun EmptyHint(text: String, color: androidx.compose.ui.graphics.Color) {
     Text(text, modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp), color = color, fontSize = 12.sp)
+}
+
+private fun greetingForNow(): String = when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
+    in 5..11 -> "Good morning"
+    in 12..16 -> "Good afternoon"
+    in 17..21 -> "Good evening"
+    else -> "Good night"
 }

@@ -75,12 +75,12 @@ fun SearchScreen(
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = Color(0xFFC6C9FF),
+                    cursorColor = MaterialTheme.colorScheme.primary,
                 ),
             )
         }
         if (state.isLoading) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { CircularProgressIndicator(color = Color(0xFFC6C9FF), strokeWidth = 2.dp) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp) }
         }
         state.error?.let { Text(it, color = Color(0xFFFFB7B7), fontSize = 12.sp) }
         playbackError?.let { Text("Playback: $it", color = Color(0xFFFFB7B7), fontSize = 12.sp) }

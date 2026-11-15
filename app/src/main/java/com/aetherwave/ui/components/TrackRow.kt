@@ -53,7 +53,7 @@ fun TrackRow(
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(track.title, color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(track.artist, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (trailingLabel != null) Text(trailingLabel, color = Color(0xFFB7C2FF), fontSize = 10.sp)
+            if (trailingLabel != null) Text(trailingLabel, color = MaterialTheme.colorScheme.primary, fontSize = 10.sp)
         }
         Text(formatTrackDuration(track.durationMs), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.54f), fontSize = 10.sp)
         if (onAdd != null) {

@@ -18,12 +18,18 @@ class NewPipeOkHttpDownloader @Inject constructor(
 ) : Downloader() {
     @Throws(IOException::class, ReCaptchaException::class)
     override fun execute(request: Request): Response {
-        val body = request.dataToSend()?.toRequestBody(
-            request.headers()["Content-Type"]?.firstOrNull()?.toMediaTypeOrNull(),
-        )
+        val method = request.httpMethod()
+        val mediaType = request.headers()["Content-Type"]?.firstOrNull()?.toMediaTypeOrNull()
+        val payload = request.dataToSend()
+        // OkHttp rejects POST/PUT/PATCH without a body, so send an empty body instead of crashing.
+        val body = when {
+            payload != null -> payload.toRequestBody(mediaType)
+            method == "POST" || method == "PUT" || method == "PATCH" -> ByteArray(0).toRequestBody(mediaType)
+            else -> null
+        }
         val builder = okhttp3.Request.Builder().url(request.url())
         request.headers().forEach { (name, values) -> values.forEach { builder.addHeader(name, it) } }
-        builder.method(request.httpMethod(), body)
+        builder.method(method, body)
         client.newCall(builder.build()).execute().use { response ->
             val responseBody = response.body?.string().orEmpty()
             val headers = response.headers.toMultimap()

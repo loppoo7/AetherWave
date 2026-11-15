@@ -58,6 +58,8 @@ import com.aetherwave.ui.screens.SearchScreen
 import com.aetherwave.ui.screens.SettingsScreen
 import com.aetherwave.ui.viewmodel.HomeViewModel
 import com.aetherwave.ui.viewmodel.LibraryViewModel
+import com.aetherwave.ui.viewmodel.ExploreViewModel
+import com.aetherwave.ui.screens.ExploreScreen
 import com.aetherwave.ui.viewmodel.MainPlayerViewModel
 import com.aetherwave.ui.viewmodel.SearchViewModel
 import androidx.compose.runtime.collectAsState
@@ -76,11 +78,13 @@ fun AetherWaveApp(
     val homeViewModel: HomeViewModel = hiltViewModel()
     val searchViewModel: SearchViewModel = hiltViewModel()
     val libraryViewModel: LibraryViewModel = hiltViewModel()
+    val exploreViewModel: ExploreViewModel = hiltViewModel()
 
     val playerState by playerViewModel.state.collectAsState()
     val homeState by homeViewModel.state.collectAsState()
     val searchState by searchViewModel.state.collectAsState()
     val libraryState by libraryViewModel.state.collectAsState()
+    val exploreState by exploreViewModel.state.collectAsState()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val route = backStackEntry?.destination?.route.orEmpty()
     val isPlayerRoute = route == "player"
@@ -123,6 +127,12 @@ fun AetherWaveApp(
             startDestination = "home",
             modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(bottom = if (isPlayerRoute) 0.dp else if (playerState.currentTrack != null) 180.dp else 100.dp),
         ) {
+            composable("explore") {
+                ExploreScreen(
+                    state = exploreState,
+                    onPlayQueue = playerViewModel::playQueue,
+                )
+            }
             composable("home") {
                 HomeScreen(
                     state = homeState,
@@ -199,6 +209,19 @@ fun AetherWaveApp(
                     onLike = playerViewModel::toggleLike,
                     onDownload = playerViewModel::downloadCurrentTrack,
                     onToggleLyrics = playerViewModel::toggleLyrics,
+                    onSetSpeed = playerViewModel::setPlaybackSpeed,
+                    onSetPitch = playerViewModel::setPitch,
+                    onSetSkipSilence = playerViewModel::setSkipSilence,
+                    onSetSleepTimer = playerViewModel::setSleepTimer,
+                    onSetSleepEndOfTrack = playerViewModel::setSleepAtEndOfTrack,
+                    onCancelSleep = playerViewModel::cancelSleepTimer,
+                    onMoveQueueItem = playerViewModel::moveQueueItem,
+                    onRemoveQueueItem = playerViewModel::removeQueueItem,
+                    onJumpQueueItem = playerViewModel::jumpToQueueItem,
+                    onSetNormalize = playerViewModel::setNormalizeVolume,
+                    onSetSoundStyle = playerViewModel::setSoundStyle,
+                    onSetLoudness = playerViewModel::setLoudnessLevel,
+                    onSetPure = playerViewModel::setPureMode,
                 )
             }
         }
@@ -224,6 +247,7 @@ fun AetherWaveApp(
                     hazeState = hazeState,
                     onHome = { navController.navigate("home") { launchSingleTop = true; popUpTo("home") { saveState = true } } },
                     onSearch = { navController.navigate("search") { launchSingleTop = true } },
+                    onExplore = { navController.navigate("explore") { launchSingleTop = true } },
                     onLibrary = { navController.navigate("library/0") { launchSingleTop = true } },
                 )
             }
@@ -238,6 +262,7 @@ private fun BottomNavigationBar(
     hazeState: dev.chrisbanes.haze.HazeState,
     onHome: () -> Unit,
     onSearch: () -> Unit,
+    onExplore: () -> Unit,
     onLibrary: () -> Unit,
 ) {
     Row(
@@ -247,6 +272,7 @@ private fun BottomNavigationBar(
     ) {
         NavigationItem("⌂", "HOME", selectedRoute == "home", Modifier.weight(1f), onHome)
         NavigationItem("⌕", "SEARCH", selectedRoute == "search", Modifier.weight(1f), onSearch)
+        NavigationItem("✦", "EXPLORE", selectedRoute == "explore", Modifier.weight(1f), onExplore)
         NavigationItem("▦", "LIBRARY", selectedRoute.startsWith("library"), Modifier.weight(1f), onLibrary)
     }
 }

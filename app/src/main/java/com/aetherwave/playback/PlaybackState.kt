@@ -17,6 +17,19 @@ data class PlaybackState(
     val shuffleMode: Boolean = false,
     val isBuffering: Boolean = false,
     val errorMessage: String? = null,
+    val queueIndex: Int = 0,
+    val queueSize: Int = 0,
+    val playbackSpeed: Float = 1f,
+    val pitch: Float = 1f,
+    val skipSilence: Boolean = false,
+    val sleepTimerEndsAt: Long? = null,
+    val sleepAtEndOfTrack: Boolean = false,
+    val normalizeVolume: Boolean = true,
+    val loudnessLevel: LoudnessLevel = LoudnessLevel.BALANCED,
+    /** Null when speed or pitch were set by hand, which means the look is custom. */
+    val soundStyle: SoundStyle? = SoundStyle.NORMAL,
+    /** Plays local files without speed, pitch, silence skipping, or normalization. */
+    val pureMode: Boolean = false,
 )
 
 @Immutable

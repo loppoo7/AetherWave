@@ -10,7 +10,7 @@ import com.aetherwave.data.local.entity.TrackEntity
 
 @Database(
     entities = [TrackEntity::class, PlaylistEntity::class, PlaylistTrackCrossRef::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AetherWaveDatabase : RoomDatabase() {

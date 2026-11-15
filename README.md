@@ -78,3 +78,36 @@ The v1.0.0 UI layer builds on the v0.3.0 playback, local database, cache, MediaS
 The GitHub Actions workflow installs the pinned Gradle 9.5.0 distribution, generates the wrapper because `gradle-wrapper.jar` is not committed in this project, runs unit tests and `assembleDebug`, and uploads `app-debug.apk` as the `AetherWave-v1.0.0-debug-apk` artifact.
 
 For this archive, the source and project configuration were statically inspected. A full Android Gradle build was not run in the packaging environment because it has no Android SDK and no installed Gradle distribution. The first authoritative compile/test result will be the GitHub Actions run after the archive is pushed.
+
+## Playback stability and Up Next (v1.0.0 patch)
+
+- **Crash containment.** `RoutedAudioDataSource` is the outermost audio data source. It converts every non-IO runtime exception from the resolver, cache or extractor into `IOException`. Media3's Loader would otherwise wrap such an exception as `UnexpectedLoaderException` and rethrow it on the main thread, which crashes the app.
+- **Service lifecycle.** `AetherWavePlaybackService` releases only its `MediaSession` on destroy. The app-wide `ExoPlayer` singleton is no longer released, so the next service start gets a working player.
+- **Reconnect.** `PlaybackController` listens for `MediaController` disconnection, clears the stale controller and rebuilds the connection on the next command.
+- **Retry layer.** A failed track is re-prepared once. Re-preparing re-runs stream resolution: Innertube first, then NewPipeExtractor.
+- **Innertube parsing.** All JSON access is type-checked. `/next` (radio queue) and section titles read from `header` are supported.
+- **Up Next / auto-radio.** Playing a YouTube track loads its related queue through `/next`. When fewer than 3 items remain in the live queue, the next radio batch is appended. Duplicates are skipped.
+- **Playback options.** Sleep timer (15, 30, 45, 60 minutes or end of track), playback speed (0.75x to 2x), pitch, and skip silence. The options sheet opens from the `⋯` button on Now Playing.
+
+- **Up Next sheet.** The UP NEXT button on Now Playing lists the live queue. Each row can be tapped to jump, moved up or down, or removed.
+- **Lyric share.** The SHARE button sends the currently highlighted synced lyric line.
+
+- **Explore.** The EXPLORE tab loads `FEmusic_explore` sections (charts, moods, new releases) and shows your most-played tracks at the top.
+- **Most played.** Each track start increments `playCount` in Room. Database version 2 adds the column through `MIGRATION_1_2`, so existing libraries and playlists are kept.
+
+- **Loudness normalization.** `/player` returns `playerConfig.audioConfig.loudnessDb` for each track. `LoudnessRegistry` converts it into a volume that is applied after the track resolves. The Normalize volume switch is in the playback options sheet. Local files are never changed.
+- **Visual system.** Neutral graphite and off-white palettes replace the indigo tints. Glass edges use the 0.75 dp micro-specular border. The ambient mesh is calmer. The Now Playing artwork has a shadow tinted by the cover palette. Swipe the artwork to change tracks and swipe the top bar down to close.
+
+Not yet implemented: backup import/export (needs a file picker), drag-to-reorder (up/down buttons are used instead), and a dynamic accent that follows each album cover across the whole app.
+
+## Ported from Auralys (partial)
+
+- **Sound style.** Normal, Sped up, Nightcore, and Slowed, set through speed and pitch presets. These are approximations and do not include reverb.
+- **Loudness target.** Quiet, Balanced, Loud, and Aggressive set the headroom used by normalization. Volume never exceeds 1, so the Loud and Aggressive presets only change the result for quiet tracks.
+- **Sleep timer fade-out.** The volume ramps down over the last minute before playback pauses. Resume restores the normal volume.
+- **Glass tiers.** `GlassTier` G1, G2, and G3 control the rim width and tint strength of liquid glass surfaces.
+- **Palette.** Dark and light backgrounds, surfaces, and text now use the Horizon values from the reference app. Error colors are included.
+
+Refraction and blur were already provided by haze-glass, so they were not ported again.
+
+- **Pure / Lossless.** When enabled, local files play with neutral speed and pitch, no silence skipping, and no normalization. The user's settings are kept and return when a YouTube track plays. YouTube streams are lossy and are not affected.

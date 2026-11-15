@@ -15,7 +15,9 @@ import com.aetherwave.data.source.youtube.InnertubeClient
 import com.aetherwave.domain.model.MusicHomeFeed
 import com.aetherwave.domain.model.LyricsResult
 import com.aetherwave.domain.model.MusicPlaylist
+import com.aetherwave.domain.model.MusicSection
 import com.aetherwave.domain.model.MusicTrack
+import com.aetherwave.domain.model.TrackSource
 import com.aetherwave.domain.repository.MusicRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -65,6 +67,29 @@ class MusicRepositoryImpl @Inject constructor(
             )
         }
 
+    /**
+     * Radio / Up Next for a YouTube seed track. Local files have no YouTube seed, so they get an
+     * empty list instead of a failed request.
+     */
+    override suspend fun getUpNext(track: MusicTrack, limit: Int): List<MusicTrack> {
+        if (track.source != TrackSource.YOUTUBE || track.sourceId.isBlank()) return emptyList()
+        return innertubeClient.upNext(track.sourceId, limit).map { fresh ->
+            trackDao.insertTrackIfMissing(fresh.toEntity())
+            val stored = trackDao.getTrack(fresh.id)
+            if (stored == null) fresh else fresh.copy(
+                isLiked = stored.isLiked,
+                lastPlayedAt = stored.lastPlayedAt,
+                isDownloaded = stored.isDownloaded,
+                localFilePath = stored.localFilePath,
+            )
+        }
+    }
+
+    override suspend fun getExploreSections(): List<MusicSection> = innertubeClient.exploreSections()
+
+    override fun observeMostPlayed(limit: Int): Flow<List<MusicTrack>> =
+        trackDao.observeMostPlayed(limit.coerceIn(1, 100)).map { rows -> rows.map { it.toDomain() } }
+
     override suspend fun scanLocalAudio(): List<MusicTrack> = mediaStoreAudioSource.scanAudio()
 
     override fun observeLikedTracks(): Flow<List<MusicTrack>> =
@@ -86,7 +111,7 @@ class MusicRepositoryImpl @Inject constructor(
 
     override suspend fun recordPlayback(track: MusicTrack, playedAt: Long) {
         trackDao.insertTrackIfMissing(track.toEntity())
-        trackDao.updateLastPlayedAt(track.id, playedAt.coerceAtLeast(0L))
+        trackDao.recordPlay(track.id, playedAt.coerceAtLeast(0L))
     }
 
     override suspend fun createPlaylist(name: String, description: String?): String {

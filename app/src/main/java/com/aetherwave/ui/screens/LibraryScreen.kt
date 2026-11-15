@@ -63,7 +63,7 @@ fun LibraryScreen(
                     title,
                     modifier = Modifier.weight(1f).liquidGlass(
                         hazeState,
-                        if (selected) Color(0xFF7379B8).copy(alpha = 0.48f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f),
+                        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.48f) else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f),
                         RoundedCornerShape(14.dp),
                     ).clickable { onTabSelected(index) }.padding(vertical = 11.dp),
                     color = if (selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f),
@@ -77,7 +77,7 @@ fun LibraryScreen(
         if (initialTab == 0) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Your playlists", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                Text("+ NEW PLAYLIST", color = Color(0xFFC6C9FF), fontWeight = FontWeight.Bold, fontSize = 10.sp,
+                Text("+ NEW PLAYLIST", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 10.sp,
                     modifier = Modifier.clickable { showCreateDialog = true }.padding(8.dp))
             }
             LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -155,7 +155,7 @@ private fun CreatePlaylistDialog(hazeState: HazeState, onDismiss: () -> Unit, on
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
                 Text("CANCEL", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontSize = 10.sp, modifier = Modifier.clickable(onClick = onDismiss).padding(10.dp))
-                Text("CREATE", color = Color(0xFFC6C9FF), fontWeight = FontWeight.Bold, fontSize = 10.sp,
+                Text("CREATE", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 10.sp,
                     modifier = Modifier.clickable { if (name.isNotBlank()) onCreate(name.trim()) }.padding(10.dp))
             }
         }

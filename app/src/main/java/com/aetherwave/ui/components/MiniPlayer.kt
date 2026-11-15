@@ -60,7 +60,7 @@ fun MiniPlayer(
         Spacer(Modifier.height(8.dp))
         val progress = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
         Box(Modifier.fillMaxWidth().height(2.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f))) {
-            Box(Modifier.fillMaxWidth(progress).height(2.dp).background(Color(0xFFC6C9FF)))
+            Box(Modifier.fillMaxWidth(progress).height(2.dp).background(MaterialTheme.colorScheme.primary))
         }
     }
 }

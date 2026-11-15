@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.palette.graphics.Palette
 import dev.chrisbanes.haze.HazeInput
@@ -44,6 +45,16 @@ import kotlinx.coroutines.withContext
 /** Liquid Glass is opt-in; standard surfaces are used unless the user enables it. */
 val LocalLiquidGlassEnabled = staticCompositionLocalOf { false }
 
+/**
+ * Glass strength tiers, modelled on the three tiers in the reference app. G1 is the clearest and
+ * thinnest, G3 the most opaque with the brightest rim.
+ */
+enum class GlassTier(val rimWidth: Dp, val tintScale: Float) {
+    G1(rimWidth = 0.5.dp, tintScale = 0.85f),
+    G2(rimWidth = 0.75.dp, tintScale = 1f),
+    G3(rimWidth = 1.dp, tintScale = 1.15f),
+}
+
 @Immutable
 data class ArtworkPalette(
     val primary: Color,
@@ -52,9 +63,9 @@ data class ArtworkPalette(
 ) {
     companion object {
         val Default = ArtworkPalette(
-            primary = Color(0xFF5367D8),
-            secondary = Color(0xFF7B3F9D),
-            highlight = Color(0xFF42A6B9),
+            primary = Color(0xFF3A3F4D),
+            secondary = Color(0xFF22252F),
+            highlight = Color(0xFF4A4F5E),
         )
     }
 }
@@ -84,9 +95,9 @@ fun rememberArtworkPalette(artwork: Bitmap?): ArtworkPalette {
                     val darkVibrant = extracted.darkVibrantSwatch?.rgb
                     val dominant = extracted.dominantSwatch?.rgb
                     ArtworkPalette(
-                        primary = Color(vibrant ?: dominant ?: 0xFF5367D8.toInt()),
-                        secondary = Color(muted ?: darkVibrant ?: 0xFF7B3F9D.toInt()),
-                        highlight = Color(extracted.lightVibrantSwatch?.rgb ?: 0xFF42A6B9.toInt()),
+                        primary = Color(vibrant ?: dominant ?: 0xFF3A3F4D.toInt()),
+                        secondary = Color(muted ?: darkVibrant ?: 0xFF22252F.toInt()),
+                        highlight = Color(extracted.lightVibrantSwatch?.rgb ?: 0xFF4A4F5E.toInt()),
                     )
                 } ?: ArtworkPalette.Default
             }
@@ -110,6 +121,7 @@ fun Modifier.liquidGlass(
     glassTint: Color = Color.White.copy(alpha = 0.12f),
     containerShape: RoundedCornerShape = RoundedCornerShape(28.dp),
     specularStrength: Float = 0.58f,
+    tier: GlassTier = GlassTier.G2,
 ): Modifier {
     val safeSpecular = specularStrength.coerceIn(0f, 1f)
     val darkSurface = MaterialTheme.colorScheme.background.luminance() < 0.45f
@@ -119,12 +131,13 @@ fun Modifier.liquidGlass(
             .clip(containerShape)
             .background(MaterialTheme.colorScheme.surface, containerShape)
             .border(
-                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.32f)),
+                BorderStroke(0.75.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                 containerShape,
             )
     }
     val baseTint = if (darkSurface) Color(0xFF101827).copy(alpha = 0.54f) else Color.White.copy(alpha = 0.58f)
     val resolvedTint = lerp(glassTint, baseTint, if (darkSurface) 0.72f else 0.64f)
+        .let { it.copy(alpha = (it.alpha * tier.tintScale).coerceIn(0f, 1f)) }
     val style = remember(resolvedTint, containerShape, safeSpecular) {
         GlassStyle.regular.then {
             tint(resolvedTint)
@@ -137,13 +150,13 @@ fun Modifier.liquidGlass(
             }
         }
     }
-    val specularBorder = remember(darkSurface, resolvedTint) {
+    // Micro-specular edge: bright at the upper-left, fading through the middle, faint lower-right.
+    val specularBorder = remember(darkSurface) {
         Brush.linearGradient(
             colorStops = arrayOf(
-                0.0f to Color.White.copy(alpha = if (darkSurface) 0.88f else 0.98f),
-                0.18f to Color.White.copy(alpha = if (darkSurface) 0.34f else 0.56f),
-                0.54f to Color.Transparent,
-                1.0f to Color.White.copy(alpha = if (darkSurface) 0.24f else 0.42f),
+                0.0f to Color.White.copy(alpha = if (darkSurface) 0.35f else 0.55f),
+                0.5f to Color.White.copy(alpha = 0.05f),
+                1.0f to Color.White.copy(alpha = if (darkSurface) 0.15f else 0.28f),
             ),
         )
     }
@@ -167,16 +180,7 @@ fun Modifier.liquidGlass(
             performanceMode = HazePerformanceMode.Default,
         )
         .border(
-            border = BorderStroke(width = 1.dp, brush = specularBorder),
-            shape = containerShape,
-        )
-        .border(
-            border = BorderStroke(
-                width = 0.5.dp,
-                brush = Brush.linearGradient(
-                    listOf(Color.White.copy(alpha = 0.22f), Color.Transparent, Color.White.copy(alpha = 0.12f)),
-                ),
-            ),
+            border = BorderStroke(width = tier.rimWidth, brush = specularBorder),
             shape = containerShape,
         )
 }
@@ -240,8 +244,8 @@ fun DynamicMeshBackground(
         drawRect(
             brush = Brush.radialGradient(
                 colorStops = arrayOf(
-                    0.0f to palette.primary.copy(alpha = 0.62f),
-                    0.48f to palette.primary.copy(alpha = 0.24f),
+                    0.0f to palette.primary.copy(alpha = 0.34f),
+                    0.48f to palette.primary.copy(alpha = 0.14f),
                     1.0f to Color.Transparent,
                 ),
                 center = Offset(
@@ -255,8 +259,8 @@ fun DynamicMeshBackground(
         drawRect(
             brush = Brush.radialGradient(
                 colorStops = arrayOf(
-                    0.0f to palette.secondary.copy(alpha = 0.54f),
-                    0.52f to palette.secondary.copy(alpha = 0.20f),
+                    0.0f to palette.secondary.copy(alpha = 0.30f),
+                    0.52f to palette.secondary.copy(alpha = 0.12f),
                     1.0f to Color.Transparent,
                 ),
                 center = Offset(
@@ -270,8 +274,8 @@ fun DynamicMeshBackground(
         drawRect(
             brush = Brush.radialGradient(
                 colorStops = arrayOf(
-                    0.0f to palette.highlight.copy(alpha = 0.32f),
-                    0.58f to palette.highlight.copy(alpha = 0.10f),
+                    0.0f to palette.highlight.copy(alpha = 0.18f),
+                    0.58f to palette.highlight.copy(alpha = 0.06f),
                     1.0f to Color.Transparent,
                 ),
                 center = Offset(

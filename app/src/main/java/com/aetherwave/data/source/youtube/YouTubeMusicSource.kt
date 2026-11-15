@@ -32,7 +32,7 @@ class YouTubeMusicSource @Inject constructor(
         require(query.isNotBlank()) { "Search query must not be blank" }
         ensureInitialized()
         try {
-            val extractor: SearchExtractor = ServiceList.YouTube.getSearchExtractor(query, listOf("music"), null)
+            val extractor: SearchExtractor = ServiceList.YouTube.getSearchExtractor(query, listOf("music_songs"), null)
             extractor.fetchPage()
             extractor.initialPage.items
                 .filterIsInstance<StreamInfoItem>()

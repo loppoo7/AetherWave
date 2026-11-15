@@ -33,6 +33,12 @@ interface TrackDao {
     @Query("UPDATE tracks SET lastPlayedAt = :playedAt WHERE id = :trackId")
     suspend fun updateLastPlayedAt(trackId: String, playedAt: Long)
 
+    @Query("UPDATE tracks SET playCount = playCount + 1, lastPlayedAt = :playedAt WHERE id = :trackId")
+    suspend fun recordPlay(trackId: String, playedAt: Long)
+
+    @Query("SELECT * FROM tracks WHERE playCount > 0 ORDER BY playCount DESC, lastPlayedAt DESC LIMIT :limit")
+    fun observeMostPlayed(limit: Int): Flow<List<TrackEntity>>
+
     @Query("UPDATE tracks SET isDownloaded = :downloaded, localFilePath = :filePath WHERE id = :trackId")
     suspend fun updateDownloadState(trackId: String, downloaded: Boolean, filePath: String?)
 

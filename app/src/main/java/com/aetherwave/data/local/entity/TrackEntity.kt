@@ -1,5 +1,6 @@
 package com.aetherwave.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -29,6 +30,7 @@ data class TrackEntity(
     val lastPlayedAt: Long? = null,
     val isDownloaded: Boolean = false,
     val localFilePath: String? = null,
+    @ColumnInfo(defaultValue = "0") val playCount: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
 )
 
@@ -64,4 +66,5 @@ fun TrackEntity.toDomain(): MusicTrack = MusicTrack(
     lastPlayedAt = lastPlayedAt,
     isDownloaded = isDownloaded,
     localFilePath = localFilePath,
+    playCount = playCount,
 )
