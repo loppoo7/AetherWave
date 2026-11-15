@@ -2,6 +2,13 @@ package com.aetherwave.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
+import com.aetherwave.R
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +35,8 @@ fun SettingsScreen(
     onThemeModeChanged: (String) -> Unit,
     liquidGlassEnabled: Boolean,
     onLiquidGlassChanged: (Boolean) -> Unit,
+    language: String,
+    onLanguageChanged: (String) -> Unit,
     onBack: () -> Unit,
 ) {
     Column(
@@ -35,8 +44,39 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("‹  Back") }
-            Text("Settings", fontSize = 23.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            TextButton(onClick = onBack) { Text("‹  " + stringResource(R.string.settings_back)) }
+            Text(stringResource(R.string.settings_title), fontSize = 23.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.settings_language_section), fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text(stringResource(R.string.settings_language_title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.settings_language_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    "system" to stringResource(R.string.lang_system),
+                    "en" to stringResource(R.string.lang_english),
+                    "in" to stringResource(R.string.lang_indonesian),
+                ).forEach { (tag, label) ->
+                    val selected = language == tag
+                    Box(
+                        Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(
+                                if (selected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f),
+                            )
+                            .clickable { onLanguageChanged(tag) }
+                            .padding(horizontal = 14.dp, vertical = 9.dp),
+                    ) {
+                        Text(
+                            label,
+                            color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onBackground,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("APPEARANCE", fontSize = 10.sp, letterSpacing = 2.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)

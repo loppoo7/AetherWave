@@ -32,6 +32,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.aetherwave.core.designsystem.components.AwGlyph
+import com.aetherwave.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
@@ -263,12 +265,12 @@ fun NowPlayingScreen(
                 ControlGlyph(if (playback.repeatMode == androidx.media3.common.Player.REPEAT_MODE_ONE) "↻1" else "↻", selected = playback.repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF, onClick = onRepeat)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                ActionGlyph(if (track?.isLiked == true) "♥" else "♡", "LIKE", track?.isLiked == true, onLike)
+                ActionGlyph(if (track?.isLiked == true) "♥" else "♡", stringResource(R.string.np_like), track?.isLiked == true, onLike)
                 ActionGlyph(if (state.isDownloading) "…" else "↓", when { track?.isDownloaded == true -> "SAVED"; track?.source?.name == "LOCAL" -> "ON DEVICE"; else -> "DOWNLOAD" }, track?.isDownloaded == true, onDownload)
-                ActionGlyph("≋", if (state.showLyrics) "ARTWORK" else "LYRICS", state.showLyrics, onToggleLyrics)
-                ActionGlyph("☰", "UP NEXT", showQueue) { showQueue = true }
+                ActionGlyph("≋", if (state.showLyrics) stringResource(R.string.np_artwork) else stringResource(R.string.np_lyrics), state.showLyrics, onToggleLyrics)
+                ActionGlyph("☰", stringResource(R.string.np_up_next), showQueue) { showQueue = true }
                 if (state.lyrics != null) {
-                    ActionGlyph("⇪", "SHARE", false) {
+                    ActionGlyph("⇪", stringResource(R.string.np_share), false) {
                         activeLyric?.takeIf(String::isNotBlank)?.let { line ->
                             val body = "\"$line\"\n${track?.title.orEmpty()} — ${track?.artist.orEmpty()}"
                             val send = Intent(Intent.ACTION_SEND).apply {
@@ -564,3 +566,4 @@ private fun audioFormatBadge(track: MusicTrack, mimeType: String?): String {
         else -> "LOCAL AUDIO"
     }
 }
+

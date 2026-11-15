@@ -8,6 +8,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -142,14 +143,84 @@ class InnertubeClient @Inject constructor(
      * Returns the highest-bitrate direct audio URL. Cipher-only formats return null and are
      * delegated to NewPipeExtractor by PlaybackModule for signature deciphering.
      */
+    /**
+     * Tries the mobile player clients that Auralys uses first. WEB_REMIX often returns no direct
+     * stream, so it is only the last Innertube attempt before NewPipeExtractor.
+     */
     suspend fun playerAudioUrl(videoId: String): PlayerStream? {
         require(videoId.isNotBlank()) { "videoId must not be blank" }
+        for (client in PLAYER_CLIENTS) {
+            val stream = try {
+                fetchPlayerStream(client, videoId)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                null
+            }
+            if (stream != null) return stream
+        }
+        return try {
+            fetchWebRemixStream(videoId)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private suspend fun fetchPlayerStream(client: PlayerClient, videoId: String): PlayerStream? {
+        val response = postPlayer(client, videoId)
+        val (url, loudness) = extractAudio(response) ?: return null
+        return PlayerStream(url = url, loudnessDb = loudness, userAgent = client.userAgent)
+    }
+
+    private suspend fun fetchWebRemixStream(videoId: String): PlayerStream? {
         val response = post("player", JsonObject().apply {
             add("context", requestContext())
             addProperty("videoId", videoId)
             addProperty("contentCheckOk", true)
             addProperty("racyCheckOk", true)
         })
+        val (url, loudness) = extractAudio(response) ?: return null
+        return PlayerStream(url = url, loudnessDb = loudness)
+    }
+
+    private suspend fun postPlayer(client: PlayerClient, videoId: String): JsonObject = withContext(Dispatchers.IO) {
+        val clientInfo = JsonObject().apply {
+            addProperty("clientName", client.name)
+            addProperty("clientVersion", client.version)
+            addProperty("hl", "en")
+            addProperty("gl", "US")
+            client.deviceModel?.let { addProperty("deviceModel", it) }
+            client.osName?.let { addProperty("osName", it) }
+            client.osVersion?.let { addProperty("osVersion", it) }
+            client.androidSdk?.let { addProperty("androidSdkVersion", it) }
+        }
+        val body = JsonObject().apply {
+            add("context", JsonObject().apply { add("client", clientInfo) })
+            addProperty("videoId", videoId)
+            addProperty("contentCheckOk", true)
+            addProperty("racyCheckOk", true)
+        }
+        val request = Request.Builder()
+            .url("https://youtubei.googleapis.com/youtubei/v1/player?prettyPrint=false")
+            .header("User-Agent", client.userAgent)
+            .header("X-YouTube-Client-Name", client.clientId)
+            .header("X-YouTube-Client-Version", client.version)
+            .post(body.toString().toRequestBody(jsonType))
+            .build()
+        httpClient.newCall(request).execute().use { response ->
+            val payload = response.body?.string().orEmpty()
+            if (!response.isSuccessful) throw IOException("${client.name} player failed with HTTP ${response.code}")
+            runCatching { JsonParser.parseString(payload) }.getOrNull()
+                ?.takeIf { it.isJsonObject }
+                ?.asJsonObject
+                ?: throw IOException("${client.name} player returned unexpected JSON")
+        }
+    }
+
+    /** Best audio-only format with a direct URL, plus the loudness reported with it. */
+    private fun extractAudio(response: JsonObject): Pair<String, Float?>? {
         val streaming = response.obj("streamingData") ?: return null
         val best = listOfNotNull(streaming.arr("adaptiveFormats"), streaming.arr("formats"))
             .flatMap { array -> array.mapNotNull { element -> element.takeIf { it.isJsonObject }?.asJsonObject } }
@@ -163,7 +234,7 @@ class InnertubeClient @Inject constructor(
         val loudness = response.obj("playerConfig")?.obj("audioConfig")?.get("loudnessDb")
             ?.takeIf { it.isJsonPrimitive }
             ?.let { runCatching { it.asFloat }.getOrNull() }
-        return PlayerStream(url = url, loudnessDb = loudness)
+        return url to loudness
     }
 
     private fun sectionTitle(section: JsonObject): String {
@@ -380,4 +451,35 @@ private fun JsonObject.long(key: String): Long? =
 data class PlayerStream(
     val url: String,
     val loudnessDb: Float?,
+    val userAgent: String? = null,
+)
+
+/** Player client identities. Values match the clients used by Auralys. */
+private data class PlayerClient(
+    val name: String,
+    val version: String,
+    val clientId: String,
+    val userAgent: String,
+    val deviceModel: String? = null,
+    val osName: String? = null,
+    val osVersion: String? = null,
+    val androidSdk: String? = null,
+)
+
+private val PLAYER_CLIENTS = listOf(
+    PlayerClient(
+        name = "ANDROID_VR", version = "1.43.32", clientId = "28",
+        userAgent = "com.google.android.apps.youtube.vr.oculus/1.43.32 (Linux; U; Android 12; en_US; Quest 3; Build/SQ3A.220605.009.A1; Cronet/107.0.5284.2)",
+        deviceModel = "Quest 3", osName = "Android", osVersion = "12", androidSdk = "32",
+    ),
+    PlayerClient(
+        name = "IOS", version = "21.26.4", clientId = "5",
+        userAgent = "com.google.ios.youtube/21.26.4 (iPhone16,2; U; CPU iOS 18_3_2 like Mac OS X;)",
+        deviceModel = "iPhone16,2", osName = "iPhone", osVersion = "18.3.2.22D82",
+    ),
+    PlayerClient(
+        name = "ANDROID_MUSIC", version = "5.34.51", clientId = "21",
+        userAgent = "com.google.android.apps.youtube.music/5.34.51 (Linux; U; Android 11) gzip",
+        osName = "Android", osVersion = "11", androidSdk = "30",
+    ),
 )

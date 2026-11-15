@@ -17,7 +17,7 @@ import java.io.IOException
 @UnstableApi
 class RefreshingResolvingDataSource(
     private val upstreamFactory: DataSource.Factory,
-    private val streamUrlProvider: (String, Boolean) -> String,
+    private val streamUrlProvider: (String, Boolean) -> ResolvedStream,
 ) : DataSource {
     private var delegate: ResolvingDataSource? = null
     private val transferListeners = mutableListOf<TransferListener>()
@@ -71,12 +71,15 @@ class RefreshingResolvingDataSource(
             if (original.scheme != "aetherwave") return@Resolver spec
             val videoUrl = original.getQueryParameter("url")
                 ?: throw IOException("Missing YouTube URL in media item")
-            val freshUrl = try {
+            val resolved = try {
                 streamUrlProvider(videoUrl, forceRefresh)
             } catch (error: Throwable) {
                 throw IOException("Unable to resolve a fresh YouTube stream", error)
             }
-            spec.buildUpon().setUri(Uri.parse(freshUrl)).build()
+            spec.buildUpon()
+                .setUri(Uri.parse(resolved.url))
+                .setHttpRequestHeaders(resolved.headers)
+                .build()
         }
         val resolving = ResolvingDataSource(upstreamFactory.createDataSource(), resolver)
         transferListeners.forEach(resolving::addTransferListener)
@@ -85,7 +88,7 @@ class RefreshingResolvingDataSource(
 
     class Factory(
         private val upstreamFactory: DataSource.Factory,
-        private val streamUrlProvider: (String, Boolean) -> String,
+        private val streamUrlProvider: (String, Boolean) -> ResolvedStream,
     ) : DataSource.Factory {
         override fun createDataSource(): DataSource =
             RefreshingResolvingDataSource(upstreamFactory, streamUrlProvider)

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_home">BERANDA</string>
+    <string name="nav_search">CARI</string>
+    <string name="nav_explore">JELAJAH</string>
+    <string name="nav_library">PUSTAKA</string>
+    <string name="home_quick_picks">Pilihan Cepat</string>
+    <string name="home_quick_picks_sub">Dibuat untuk lagu berikutnya</string>
+    <string name="home_trending">Sedang Tren</string>
+    <string name="home_trending_sub">Lagu yang sedang didengarkan orang</string>
+    <string name="home_recommended">Rekomendasi</string>
+    <string name="home_recommended_sub">Pilihan dari YouTube Music</string>
+    <string name="greet_morning">Selamat pagi</string>
+    <string name="greet_afternoon">Selamat siang</string>
+    <string name="greet_evening">Selamat sore</string>
+    <string name="greet_night">Selamat malam</string>
+    <string name="np_like">SUKA</string>
+    <string name="np_lyrics">LIRIK</string>
+    <string name="np_artwork">SAMPUL</string>
+    <string name="np_up_next">BERIKUTNYA</string>
+    <string name="np_share">BAGIKAN</string>
+    <string name="settings_title">Pengaturan</string>
+    <string name="settings_back">Kembali</string>
+    <string name="settings_language_section">BAHASA</string>
+    <string name="settings_language_title">Bahasa aplikasi</string>
+    <string name="settings_language_desc">Ikuti bahasa HP, atau pilih bahasa untuk AetherWave.</string>
+    <string name="lang_system">Sistem</string>
+    <string name="lang_english">English</string>
+    <string name="lang_indonesian">Bahasa Indonesia</string>
+</resources>

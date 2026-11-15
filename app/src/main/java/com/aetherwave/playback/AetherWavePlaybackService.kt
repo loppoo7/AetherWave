@@ -5,7 +5,9 @@ import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSessionService
+import android.app.NotificationManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -16,8 +18,22 @@ class AetherWavePlaybackService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
 
+    private companion object {
+        const val PLAYBACK_CHANNEL_ID = "aetherwave_playback_high"
+        const val PLAYBACK_NOTIFICATION_ID = 1001
+    }
+
     override fun onCreate() {
         super.onCreate()
+        // High importance keeps the playback notification at the top of the shade and lock screen.
+        // A new channel id is used so the setting also applies to installs that already have the old channel.
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this)
+                .setChannelId(PLAYBACK_CHANNEL_ID)
+                .setChannelImportance(NotificationManager.IMPORTANCE_HIGH)
+                .setNotificationId(PLAYBACK_NOTIFICATION_ID)
+                .build(),
+        )
         player.setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(C.USAGE_MEDIA)

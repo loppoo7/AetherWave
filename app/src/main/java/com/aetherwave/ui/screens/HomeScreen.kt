@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.aetherwave.core.designsystem.components.AwGlyph
+import com.aetherwave.R
+import androidx.compose.ui.res.stringResource
 import com.aetherwave.core.designsystem.components.liquidGlass
 import com.aetherwave.domain.model.MusicTrack
 import com.aetherwave.domain.model.MusicPlaylist
@@ -60,7 +62,13 @@ fun HomeScreen(
     onOpenLibrary: (Int) -> Unit,
 ) {
     var selectedTrack by remember { mutableStateOf<MusicTrack?>(null) }
-    val greeting = remember { greetingForNow() }
+    val hour = remember { java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) }
+    val greeting = when (hour) {
+        in 5..11 -> stringResource(R.string.greet_morning)
+        in 12..16 -> stringResource(R.string.greet_afternoon)
+        in 17..21 -> stringResource(R.string.greet_evening)
+        else -> stringResource(R.string.greet_night)
+    }
     val foreground = MaterialTheme.colorScheme.onBackground
     val muted = foreground.copy(alpha = 0.62f)
     LazyColumn(
@@ -96,7 +104,7 @@ fun HomeScreen(
                 )
             }
         }
-        item { SectionTitle("Quick Picks", "Made for your next listen", foreground, muted) }
+        item { SectionTitle(stringResource(R.string.home_quick_picks), stringResource(R.string.home_quick_picks_sub), foreground, muted) }
         if (state.isLoading && state.quickPicks.isEmpty()) {
             item {
                 Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
@@ -128,7 +136,7 @@ fun HomeScreen(
             }
         }
         if (state.trending.isNotEmpty()) {
-            item { SectionTitle("Trending", "Songs people are listening to", foreground, muted) }
+            item { SectionTitle(stringResource(R.string.home_trending), stringResource(R.string.home_trending_sub), foreground, muted) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(end = 4.dp)) {
                     itemsIndexed(state.trending, key = { _, track -> track.id }) { index, track ->
@@ -140,7 +148,7 @@ fun HomeScreen(
             }
         }
         if (state.recommended.isNotEmpty()) {
-            item { SectionTitle("Recommended", "Picked from YouTube Music", foreground, muted) }
+            item { SectionTitle(stringResource(R.string.home_recommended), stringResource(R.string.home_recommended_sub), foreground, muted) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(end = 4.dp)) {
                     itemsIndexed(state.recommended, key = { _, track -> track.id }) { index, track ->
@@ -276,9 +284,3 @@ private fun EmptyHint(text: String, color: androidx.compose.ui.graphics.Color) {
     Text(text, modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp), color = color, fontSize = 12.sp)
 }
 
-private fun greetingForNow(): String = when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
-    in 5..11 -> "Good morning"
-    in 12..16 -> "Good afternoon"
-    in 17..21 -> "Good evening"
-    else -> "Good night"
-}

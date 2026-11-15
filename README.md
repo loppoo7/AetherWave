@@ -128,3 +128,20 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 - **Black launch screen.** The window background is black, so the white flash on start is gone.
 - **Lighter navigation.** The ambient background is static. The continuous animation was redrawing the whole screen every frame.
 - **Icons.** Icon strokes are slightly heavier.
+
+## 1.5
+
+- **Playback.** Stream resolution tries the Auralys client set first: ANDROID_VR, IOS, and ANDROID_MUSIC, each with its own User-Agent. WEB_REMIX and NewPipeExtractor follow as fallbacks.
+- **Status messages** appear at the top of Now Playing, not in the middle.
+- **Language.** Settings > Language switches between System, English, and Bahasa Indonesia. Some labels (Settings rows, options sheet) are still English-only.
+
+## 1.5
+
+- **Playback.** Stream resolution tries the Auralys client set first: ANDROID_VR, IOS, and ANDROID_MUSIC, each with its own User-Agent. WEB_REMIX and NewPipeExtractor follow as fallbacks.
+- **Status messages** appear at the top of Now Playing, not in the middle.
+- **Language.** Settings > Language switches between System, English, and Bahasa Indonesia. Some labels (Settings rows, options sheet) are still English-only.
+
+## 1.6
+
+- **Persistent playback notification** uses a high-importance channel, so it appears at the top of the notification shade. Android may still place media controls in its own media panel.
+- **In-app messages** return to their original place at the bottom of Now Playing.

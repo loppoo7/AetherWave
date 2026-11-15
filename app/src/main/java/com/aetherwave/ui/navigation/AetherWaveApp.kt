@@ -44,6 +44,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.aetherwave.core.designsystem.components.AwGlyph
+import com.aetherwave.R
+import androidx.compose.ui.res.stringResource
 import com.aetherwave.core.designsystem.components.ArtworkPalette
 import com.aetherwave.core.designsystem.components.DynamicMeshBackground
 import com.aetherwave.core.designsystem.components.liquidGlass
@@ -72,6 +74,8 @@ fun AetherWaveApp(
     onThemeModeChanged: (String) -> Unit,
     liquidGlassEnabled: Boolean,
     onLiquidGlassChanged: (Boolean) -> Unit,
+    language: String,
+    onLanguageChanged: (String) -> Unit,
 ) {
     val navController = rememberNavController()
     val hazeState = rememberLiquidGlassState()
@@ -152,6 +156,8 @@ fun AetherWaveApp(
                     onThemeModeChanged = onThemeModeChanged,
                     liquidGlassEnabled = liquidGlassEnabled,
                     onLiquidGlassChanged = onLiquidGlassChanged,
+                    language = language,
+                    onLanguageChanged = onLanguageChanged,
                     onBack = { navController.popBackStack() },
                 )
             }
@@ -271,10 +277,10 @@ private fun BottomNavigationBar(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NavigationItem("⌂", "HOME", selectedRoute == "home", Modifier.weight(1f), onHome)
-        NavigationItem("⌕", "SEARCH", selectedRoute == "search", Modifier.weight(1f), onSearch)
-        NavigationItem("✦", "EXPLORE", selectedRoute == "explore", Modifier.weight(1f), onExplore)
-        NavigationItem("▦", "LIBRARY", selectedRoute.startsWith("library"), Modifier.weight(1f), onLibrary)
+        NavigationItem("⌂", stringResource(R.string.nav_home), selectedRoute == "home", Modifier.weight(1f), onHome)
+        NavigationItem("⌕", stringResource(R.string.nav_search), selectedRoute == "search", Modifier.weight(1f), onSearch)
+        NavigationItem("✦", stringResource(R.string.nav_explore), selectedRoute == "explore", Modifier.weight(1f), onExplore)
+        NavigationItem("▦", stringResource(R.string.nav_library), selectedRoute.startsWith("library"), Modifier.weight(1f), onLibrary)
     }
 }
 

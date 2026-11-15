@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_home">HOME</string>
+    <string name="nav_search">SEARCH</string>
+    <string name="nav_explore">EXPLORE</string>
+    <string name="nav_library">LIBRARY</string>
+    <string name="home_quick_picks">Quick Picks</string>
+    <string name="home_quick_picks_sub">Made for your next listen</string>
+    <string name="home_trending">Trending</string>
+    <string name="home_trending_sub">Songs people are listening to</string>
+    <string name="home_recommended">Recommended</string>
+    <string name="home_recommended_sub">Picked from YouTube Music</string>
+    <string name="greet_morning">Good morning</string>
+    <string name="greet_afternoon">Good afternoon</string>
+    <string name="greet_evening">Good evening</string>
+    <string name="greet_night">Good night</string>
+    <string name="np_like">LIKE</string>
+    <string name="np_lyrics">LYRICS</string>
+    <string name="np_artwork">ARTWORK</string>
+    <string name="np_up_next">UP NEXT</string>
+    <string name="np_share">SHARE</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_language_section">LANGUAGE</string>
+    <string name="settings_language_title">App language</string>
+    <string name="settings_language_desc">Follow your phone, or choose a language for AetherWave.</string>
+    <string name="lang_system">System</string>
+    <string name="lang_english">English</string>
+    <string name="lang_indonesian">Bahasa Indonesia</string>
+</resources>

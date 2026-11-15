@@ -12,11 +12,17 @@ import androidx.compose.runtime.setValue
 import com.aetherwave.core.crash.CrashReportDialog
 import com.aetherwave.core.crash.CrashReporter
 import com.aetherwave.core.designsystem.theme.AetherWaveTheme
+import com.aetherwave.core.locale.AppLocale
+import android.content.Context
 import com.aetherwave.ui.navigation.AetherWaveApp
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -39,6 +45,11 @@ class MainActivity : ComponentActivity() {
             AetherWaveTheme(darkTheme = darkTheme) {
                 AetherWaveApp(
                     darkTheme = darkTheme,
+                    language = preferences.getString(AppLocale.KEY, AppLocale.SYSTEM) ?: AppLocale.SYSTEM,
+                    onLanguageChanged = { tag ->
+                        preferences.edit().putString(AppLocale.KEY, tag).apply()
+                        recreate()
+                    },
                     themeMode = themeMode,
                     onThemeModeChanged = { mode ->
                         themeMode = mode

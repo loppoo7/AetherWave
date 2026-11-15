@@ -22,6 +22,7 @@ import com.aetherwave.data.source.youtube.PlayerStream
 import com.aetherwave.playback.LoudnessRegistry
 import com.aetherwave.data.source.youtube.YouTubeMusicSource
 import com.aetherwave.playback.RefreshingResolvingDataSource
+import com.aetherwave.playback.ResolvedStream
 import com.aetherwave.playback.RoutedAudioDataSource
 import dagger.Module
 import dagger.Provides
@@ -87,15 +88,18 @@ object PlaybackModule {
 
         val defaultUpstream = DefaultDataSource.Factory(context, httpFactory)
         val resolvingFactory = RefreshingResolvingDataSource.Factory(defaultUpstream) { videoUrl, forceRefresh ->
-            // Extractor access is blocking; Media3 invokes this on its loading thread.
+            // Extractor and Innertube calls block here; Media3 runs this on its loading thread.
             runBlocking(Dispatchers.IO) {
                 val videoId = extractVideoId(videoUrl)
                 val direct = if (forceRefresh) null else innertubeAudioUrlOrNull(innertubeClient, videoId)
                 if (direct != null) {
                     direct.loudnessDb?.let { LoudnessRegistry.record(videoId, it) }
-                    direct.url
+                    ResolvedStream(
+                        url = direct.url,
+                        headers = direct.userAgent?.let { mapOf("User-Agent" to it) }.orEmpty(),
+                    )
                 } else {
-                    youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url
+                    ResolvedStream(url = youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url)
                 }
             }
         }
