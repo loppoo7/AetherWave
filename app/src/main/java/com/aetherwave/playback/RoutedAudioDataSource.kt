@@ -40,7 +40,7 @@ class RoutedAudioDataSource(
         }
         val created = try {
             factory.createDataSource()
-        } catch (error: RuntimeException) {
+        } catch (error: Throwable) {
             throw IOException("Unable to create an audio data source", error)
         }
         listeners.forEach(created::addTransferListener)
@@ -50,7 +50,7 @@ class RoutedAudioDataSource(
         } catch (error: IOException) {
             closeDelegate()
             throw error
-        } catch (error: RuntimeException) {
+        } catch (error: Throwable) {
             closeDelegate()
             throw IOException("Audio source failed to open: ${error.message}", error)
         }
@@ -63,7 +63,7 @@ class RoutedAudioDataSource(
             active.read(buffer, offset, length)
         } catch (error: IOException) {
             throw error
-        } catch (error: RuntimeException) {
+        } catch (error: Throwable) {
             throw IOException("Audio read failed: ${error.message}", error)
         }
     }

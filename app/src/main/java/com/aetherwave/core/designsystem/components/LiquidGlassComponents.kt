@@ -5,7 +5,6 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -213,25 +212,9 @@ fun DynamicMeshBackground(
     palette: ArtworkPalette,
     modifier: Modifier = Modifier,
 ) {
-    val transition = rememberInfiniteTransition(label = "aetherwave-mesh")
-    val phase by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 22_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "mesh-phase",
-    )
-    val counterPhase by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 28_000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "mesh-counter-phase",
-    )
+    // Fixed phases: an infinite animation redrew the whole screen every frame and made navigation lag.
+    val phase = 0.5f
+    val counterPhase = 0.5f
 
     val baseBackground = MaterialTheme.colorScheme.background
     Canvas(modifier = modifier) {

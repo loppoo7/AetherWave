@@ -121,3 +121,10 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 - **Vector icons.** Toolbar, bottom bar, Now Playing controls, and mini player use vector icons (`AwGlyph`) instead of text characters. Glyphs without an icon fall back to text.
 - **Pill bottom bar.** The bottom navigation uses a full pill shape.
 - The palette, glass tiers, and crash report from 1.2 are included.
+
+## 1.4
+
+- **Crash fix (Android 10).** NewPipeExtractor v0.27.1 calls `URLDecoder.decode(String, Charset)`, which Android 10 lacks. Core library desugaring now provides it. The audio data sources also convert `Error`s into playback errors, so a failure like this no longer closes the app.
+- **Black launch screen.** The window background is black, so the white flash on start is gone.
+- **Lighter navigation.** The ambient background is static. The continuous animation was redrawing the whole screen every frame.
+- **Icons.** Icon strokes are slightly heavier.

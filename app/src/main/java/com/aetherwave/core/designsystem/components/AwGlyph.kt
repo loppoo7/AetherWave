@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 private class GlyphSpec(
     val path: String,
     val filled: Boolean = false,
-    val strokeWidth: Float = 1.8f,
+    val strokeWidth: Float = 2.2f,
 )
 
 private const val REPEAT_PATH = "M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"

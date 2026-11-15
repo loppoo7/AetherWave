@@ -1,10 +1,12 @@
 <resources>
-    <style name="Theme.AetherWave" parent="android:style/Theme.Material.Light.NoActionBar">
+    <style name="Theme.AetherWave" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:colorBackground">#000000</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">#080A14</item>
-        <item name="android:navigationBarColor">#080A14</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
         <item name="android:windowLightNavigationBar">false</item>
-        <item name="android:colorAccent">#9AA8FF</item>
+        <item name="android:colorAccent">#E8E8EE</item>
     </style>
 </resources>

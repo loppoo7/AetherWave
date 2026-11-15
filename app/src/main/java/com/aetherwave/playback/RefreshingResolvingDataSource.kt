@@ -73,7 +73,7 @@ class RefreshingResolvingDataSource(
                 ?: throw IOException("Missing YouTube URL in media item")
             val freshUrl = try {
                 streamUrlProvider(videoUrl, forceRefresh)
-            } catch (error: Exception) {
+            } catch (error: Throwable) {
                 throw IOException("Unable to resolve a fresh YouTube stream", error)
             }
             spec.buildUpon().setUri(Uri.parse(freshUrl)).build()
