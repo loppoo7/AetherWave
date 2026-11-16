@@ -49,7 +49,7 @@ class PlaybackController @Inject constructor(
     private val exoPlayer: ExoPlayer,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val mutableState = MutableStateFlow(PlaybackState())
+    private val mutableState = MutableStateFlow(PlaybackPrefs.load(context))
     val state: StateFlow<PlaybackState> = mutableState.asStateFlow()
     private val mutableQueue = MutableStateFlow<List<MusicTrack>>(emptyList())
     /** Live snapshot of the player's timeline, in playback order. */
@@ -133,6 +133,7 @@ class PlaybackController @Inject constructor(
         scope.launch {
             mutableState.update { it.copy(loudnessLevel = level) }
             appliedVolume = -1f
+            PlaybackPrefs.save(context, mutableState.value)
         }
     }
 
@@ -140,6 +141,7 @@ class PlaybackController @Inject constructor(
         scope.launch {
             mutableState.update { it.copy(normalizeVolume = enabled) }
             appliedVolume = -1f
+            PlaybackPrefs.save(context, mutableState.value)
         }
     }
 
@@ -164,6 +166,7 @@ class PlaybackController @Inject constructor(
     fun setPureMode(enabled: Boolean) {
         scope.launch {
             mutableState.update { it.copy(pureMode = enabled) }
+            PlaybackPrefs.save(context, mutableState.value)
         }
     }
 
@@ -191,6 +194,7 @@ class PlaybackController @Inject constructor(
         scope.launch {
             exoPlayer.setSkipSilenceEnabled(enabled)
             mutableState.update { it.copy(skipSilence = enabled) }
+            PlaybackPrefs.save(context, mutableState.value)
         }
     }
 
@@ -246,6 +250,7 @@ class PlaybackController @Inject constructor(
             mutableState.update {
                 it.copy(playbackSpeed = safeSpeed, pitch = safePitch, soundStyle = style)
             }
+            PlaybackPrefs.save(context, mutableState.value)
         }
     }
 

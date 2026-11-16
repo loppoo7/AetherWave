@@ -150,3 +150,12 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Build fixes.** The playback notification channel is created in code with high importance. The duplicate import in Settings is removed.
 - **Performance.** Release builds use R8 code shrinking and resource shrinking. Test performance on the release APK, since the debug APK is always slower.
+
+## 1.8
+
+- **Icons.** Every glyph in the app is drawn with Material Rounded icons (`AwGlyph`), using the same stroke weight and corner style everywhere. The Compose BOM manages the icon library version.
+
+## 1.9
+
+- **Settings hub.** Settings is split into Appearance, Sound & playback, Language, and About. Each option is connected to a feature that works.
+- **Saved playback options.** Normalization, loudness target, Pure / Lossless, skip silence, speed, pitch, and sound style are saved and restored when the app starts.

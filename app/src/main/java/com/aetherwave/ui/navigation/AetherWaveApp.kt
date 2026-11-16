@@ -158,6 +158,14 @@ fun AetherWaveApp(
                     onLiquidGlassChanged = onLiquidGlassChanged,
                     language = language,
                     onLanguageChanged = onLanguageChanged,
+                    playback = playerState.playback,
+                    onSetNormalize = playerViewModel::setNormalizeVolume,
+                    onSetLoudness = playerViewModel::setLoudnessLevel,
+                    onSetPure = playerViewModel::setPureMode,
+                    onSetSkipSilence = playerViewModel::setSkipSilence,
+                    onSetSoundStyle = playerViewModel::setSoundStyle,
+                    onSetSpeed = playerViewModel::setPlaybackSpeed,
+                    onSetPitch = playerViewModel::setPitch,
                     onBack = { navController.popBackStack() },
                 )
             }

@@ -64,6 +64,8 @@ ksp {
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation(platform(libs.androidx.compose.bom))
+    // Rounded Material icons. The Compose BOM sets the version; R8 removes unused icons in release.
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
