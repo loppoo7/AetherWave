@@ -180,3 +180,8 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 - **Faster song start.** The mobile player clients run at the same time instead of one after another, each with an 8-second timeout.
 - **Faster app start.** The player and audio cache are created on first playback. Explore loads only when its screen opens.
 - **Less idle work.** Playback position updates every 1.5 seconds while paused, instead of every 450 ms.
+
+## 2.3
+
+- **Auto-skip is off by default.** It is an option in Settings > Sound & playback.
+- **Clearer playback errors.** When a song cannot be played, the message lists the step that failed, for example each Innertube client's reason, then NewPipe's error. Use this text to diagnose stream failures.

@@ -150,45 +150,59 @@ class InnertubeClient @Inject constructor(
      * Tries the mobile player clients that Auralys uses first. WEB_REMIX often returns no direct
      * stream, so it is only the last Innertube attempt before NewPipeExtractor.
      */
-    suspend fun playerAudioUrl(videoId: String): PlayerStream? {
+    /**
+     * Returns a direct stream from the first client that has one, in priority order. When none
+     * does, throws with the reason from each client, so the playback error names the failing step.
+     */
+    suspend fun playerAudioUrl(videoId: String): PlayerStream {
         require(videoId.isNotBlank()) { "videoId must not be blank" }
-        // The mobile clients run at the same time. The first one, in priority order, that returns a
-        // direct stream wins, and the rest are cancelled. Trying them one after another made every
-        // song wait for each failed client before playback could start.
         return coroutineScope {
             val attempts = PLAYER_CLIENTS.map { client ->
-                async {
-                    withTimeoutOrNull(CLIENT_TIMEOUT_MS) {
-                        runCatching { fetchPlayerStream(client, videoId) }.getOrNull()
-                    }
-                }
+                async { withTimeoutOrNull(CLIENT_TIMEOUT_MS) { runCatching { fetchPlayerStream(client, videoId) } } }
             }
             try {
-                attempts.firstNotNullOfOrNull { it.await() }
-                    ?: withTimeoutOrNull(CLIENT_TIMEOUT_MS) {
-                        runCatching { fetchWebRemixStream(videoId) }.getOrNull()
-                    }
+                val reasons = mutableListOf<String>()
+                for (attempt in attempts) {
+                    val result = attempt.await()
+                    val stream = result?.getOrNull()
+                    if (stream != null) return@coroutineScope stream
+                    reasons += result?.exceptionOrNull()?.message ?: "timed out"
+                }
+                val web = withTimeoutOrNull(CLIENT_TIMEOUT_MS) { runCatching { fetchWebRemixStream(videoId) } }
+                web?.getOrNull()?.let { return@coroutineScope it }
+                reasons += "WEB_REMIX: " + (web?.exceptionOrNull()?.message ?: "timed out")
+                throw IOException(reasons.joinToString(" ; "))
             } finally {
                 attempts.forEach { it.cancel() }
             }
         }
     }
 
-    private suspend fun fetchPlayerStream(client: PlayerClient, videoId: String): PlayerStream? {
+    private suspend fun fetchPlayerStream(client: PlayerClient, videoId: String): PlayerStream {
         val response = postPlayer(client, videoId)
-        val (url, loudness) = extractAudio(response) ?: return null
+        val (url, loudness) = extractAudio(response)
+            ?: throw IOException("${client.name}: ${playabilityReason(response)}")
         return PlayerStream(url = url, loudnessDb = loudness, userAgent = client.userAgent)
     }
 
-    private suspend fun fetchWebRemixStream(videoId: String): PlayerStream? {
+    private suspend fun fetchWebRemixStream(videoId: String): PlayerStream {
         val response = post("player", JsonObject().apply {
             add("context", requestContext())
             addProperty("videoId", videoId)
             addProperty("contentCheckOk", true)
             addProperty("racyCheckOk", true)
         })
-        val (url, loudness) = extractAudio(response) ?: return null
+        val (url, loudness) = extractAudio(response)
+            ?: throw IOException("WEB_REMIX: ${playabilityReason(response)}")
         return PlayerStream(url = url, loudnessDb = loudness)
+    }
+
+    /** Why a player response has no usable audio: the playability status, or cipher-only formats. */
+    private fun playabilityReason(response: JsonObject): String {
+        if (response.obj("streamingData") != null) return "formats need a cipher, no direct URL"
+        val status = response.obj("playabilityStatus")
+        return listOfNotNull(status?.str("status") ?: "no playabilityStatus", status?.str("reason"))
+            .joinToString(": ")
     }
 
     private suspend fun postPlayer(client: PlayerClient, videoId: String): JsonObject = withContext(Dispatchers.IO) {

@@ -21,7 +21,7 @@ object PlaybackPrefs {
             playbackSpeed = prefs.getFloat("speed", 1f),
             pitch = prefs.getFloat("pitch", 1f),
             soundStyle = if (styleName == CUSTOM) null else SoundStyle.entries.firstOrNull { it.name == styleName } ?: SoundStyle.NORMAL,
-            autoSkipOnError = prefs.getBoolean("auto_skip", true),
+            autoSkipOnError = prefs.getBoolean("auto_skip", false),
             hapticsEnabled = prefs.getBoolean("haptics", true),
             sponsorBlockEnabled = prefs.getBoolean("sponsor", true),
             scrobbleEnabled = prefs.getBoolean("scrobble", false),

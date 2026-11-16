@@ -33,6 +33,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.io.IOException
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -88,10 +89,15 @@ object PlaybackModule {
 
         val defaultUpstream = DefaultDataSource.Factory(context, httpFactory)
         val resolvingFactory = RefreshingResolvingDataSource.Factory(defaultUpstream) { videoUrl, forceRefresh ->
-            // Extractor and Innertube calls block here; Media3 runs this on its loading thread.
+            // Runs on Media3's loading thread. When both sources fail, the error names each one.
             runBlocking(Dispatchers.IO) {
                 val videoId = extractVideoId(videoUrl)
-                val direct = if (forceRefresh) null else innertubeAudioUrlOrNull(innertubeClient, videoId)
+                val innertube = if (forceRefresh) {
+                    Result.failure<PlayerStream>(IOException("refresh requested"))
+                } else {
+                    runCatching { innertubeClient.playerAudioUrl(videoId) }
+                }
+                val direct = innertube.getOrNull()
                 if (direct != null) {
                     direct.loudnessDb?.let { LoudnessRegistry.record(videoId, it) }
                     ResolvedStream(
@@ -99,7 +105,16 @@ object PlaybackModule {
                         headers = direct.userAgent?.let { mapOf("User-Agent" to it) }.orEmpty(),
                     )
                 } else {
-                    ResolvedStream(url = youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url)
+                    val fallback = runCatching { youtubeMusicSource.getBestAudioStreamUrl(videoUrl).url }
+                    ResolvedStream(
+                        url = fallback.getOrElse { error ->
+                            throw IOException(
+                                "Innertube: ${innertube.exceptionOrNull()?.message ?: "no stream"} | " +
+                                    "NewPipe: ${error.javaClass.simpleName} ${error.message.orEmpty()}",
+                                error,
+                            )
+                        },
+                    )
                 }
             }
         }

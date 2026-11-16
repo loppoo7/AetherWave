@@ -31,7 +31,7 @@ data class PlaybackState(
     /** Plays local files without speed, pitch, silence skipping, or normalization. */
     val pureMode: Boolean = false,
     /** Skip to the next track when one cannot be played. */
-    val autoSkipOnError: Boolean = true,
+    val autoSkipOnError: Boolean = false,
     /** Light vibration on play, pause, and skip. */
     val hapticsEnabled: Boolean = true,
     /** Skip sponsor, intro, outro, and non-music segments from SponsorBlock. */

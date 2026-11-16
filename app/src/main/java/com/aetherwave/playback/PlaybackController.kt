@@ -562,7 +562,11 @@ class PlaybackController @Inject constructor(
     }
 
     private fun describeError(error: PlaybackException): String {
-        val detail = error.cause?.message?.takeIf { it.isNotBlank() }?.take(120)
+        val chain = generateSequence<Throwable>(error) { it.cause }
+            .mapNotNull { it.message?.takeIf(String::isNotBlank) }
+            .distinct()
+            .toList()
+        val detail = chain.joinToString(" ← ").take(500).ifBlank { null }
         return listOfNotNull(error.errorCodeName, detail).joinToString(" · ")
     }
 
