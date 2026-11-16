@@ -159,3 +159,17 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Settings hub.** Settings is split into Appearance, Sound & playback, Language, and About. Each option is connected to a feature that works.
 - **Saved playback options.** Normalization, loudness target, Pure / Lossless, skip silence, speed, pitch, and sound style are saved and restored when the app starts.
+
+## 2.0
+
+- **Auto-skip on error.** If a song cannot be played, the queue moves to the next one. Toggle: Settings > Sound & playback.
+- **Haptic feedback.** A light vibration on play, pause, and skip. Toggle: Settings > Sound & playback.
+- **Instrumental breaks in lyrics.** A music note fills from the bottom up during gaps of 6 seconds or more between lyric lines, and at the start of a track.
+
+## 2.1
+
+- **SponsorBlock.** Skips sponsor, intro, outro, and non-music segments in YouTube videos. Toggle: Settings > Integrations.
+- **ListenBrainz scrobbling.** Sends listens after half the track (or four minutes) has played, and a now-playing update when a track starts. Needs a user token in Settings > Integrations. Last.fm is not included yet, since it needs an API key.
+- **Accent color.** Default, Ocean, Mint, Amber, and Rose. Set in Settings > Appearance.
+- **Language fix.** Indonesian is stored as "id", so the app switches language correctly.
+- **Error details.** Playback errors show the error code and its cause on screen.

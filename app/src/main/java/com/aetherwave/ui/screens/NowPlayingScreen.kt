@@ -32,6 +32,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.aetherwave.core.designsystem.components.AwGlyph
+import com.aetherwave.ui.components.InstrumentalBreak
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import com.aetherwave.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.material3.FilterChip
@@ -118,6 +121,10 @@ fun NowPlayingScreen(
     val track = state.currentTrack
     var showOptions by remember { mutableStateOf(false) }
     var showQueue by remember { mutableStateOf(false) }
+    val haptics = LocalHapticFeedback.current
+    val tap: () -> Unit = {
+        if (state.playback.hapticsEnabled) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
     val activeLyric = state.lyrics?.syncedLines
         ?.lastOrNull { it.timestampMs <= state.playback.position }?.text
     val context = LocalContext.current
@@ -250,9 +257,9 @@ fun NowPlayingScreen(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                 ControlGlyph("⤨", selected = playback.shuffleMode, onClick = onShuffle)
-                ControlGlyph("|◀", onClick = onPrevious, large = true)
+                ControlGlyph("|◀", onClick = { tap(); onPrevious() }, large = true)
                 LiquidGlass(
-                    modifier = Modifier.size(66.dp).clickable(onClick = onPlayPause),
+                    modifier = Modifier.size(66.dp).clickable(onClick = { tap(); onPlayPause() }),
                     state = hazeState,
                     tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.24f),
                     content = {
@@ -261,7 +268,7 @@ fun NowPlayingScreen(
                         }
                     },
                 )
-                ControlGlyph("▶|", onClick = onNext, large = true)
+                ControlGlyph("▶|", onClick = { tap(); onNext() }, large = true)
                 ControlGlyph(if (playback.repeatMode == androidx.media3.common.Player.REPEAT_MODE_ONE) "↻1" else "↻", selected = playback.repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF, onClick = onRepeat)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
@@ -496,11 +503,44 @@ private fun <T> ChoiceChips(
 }
 
 @Composable
+private sealed interface LyricRow {
+    val startMs: Long
+}
+
+private data class LyricLineRow(val index: Int, val line: LyricLine) : LyricRow {
+    override val startMs: Long get() = line.timestampMs
+}
+
+private data class InstrumentalRow(override val startMs: Long, val endMs: Long) : LyricRow
+
+/** A gap of this length or more between lines is treated as an instrumental break. */
+private const val INSTRUMENTAL_GAP_MS = 6_000L
+/** Time a sung line is assumed to take before the instrumental break starts. */
+private const val INSTRUMENTAL_LEAD_MS = 4_000L
+
+private fun buildLyricRows(lines: List<LyricLine>): List<LyricRow> {
+    val rows = mutableListOf<LyricRow>()
+    lines.forEachIndexed { index, line ->
+        if (index == 0 && line.timestampMs >= INSTRUMENTAL_GAP_MS) {
+            rows += InstrumentalRow(startMs = 0L, endMs = line.timestampMs)
+        }
+        rows += LyricLineRow(index, line)
+        val next = lines.getOrNull(index + 1)
+        if (next != null && next.timestampMs - line.timestampMs >= INSTRUMENTAL_GAP_MS) {
+            rows += InstrumentalRow(startMs = line.timestampMs + INSTRUMENTAL_LEAD_MS, endMs = next.timestampMs)
+        }
+    }
+    return rows
+}
+
+@Composable
 private fun LyricsPanel(lines: List<LyricLine>, position: Long, isLoading: Boolean, onSeek: (Long) -> Unit) {
     val listState = rememberLazyListState()
-    val activeIndex = lines.indexOfLast { it.timestampMs <= position }.coerceAtLeast(0)
-    LaunchedEffect(activeIndex, lines.size) {
-        if (lines.isNotEmpty()) listState.animateScrollToItem((activeIndex - 2).coerceAtLeast(0))
+    val rows = remember(lines) { buildLyricRows(lines) }
+    val activeLine = lines.indexOfLast { it.timestampMs <= position }.coerceAtLeast(0)
+    val activeRow = rows.indexOfLast { it.startMs <= position }.coerceAtLeast(0)
+    LaunchedEffect(activeRow, rows.size) {
+        if (rows.isNotEmpty()) listState.animateScrollToItem((activeRow - 2).coerceAtLeast(0))
     }
     if (isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Finding synchronized lyrics…", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f), fontSize = 13.sp) }
@@ -508,16 +548,26 @@ private fun LyricsPanel(lines: List<LyricLine>, position: Long, isLoading: Boole
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No synchronized lyrics found for this track.", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f), fontSize = 13.sp, textAlign = TextAlign.Center) }
     } else {
         LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(18.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 32.dp)) {
-            itemsIndexed(lines) { index, line ->
-                Text(
-                    line.text,
-                    modifier = Modifier.fillMaxWidth().clickable { onSeek(line.timestampMs) }.padding(horizontal = 12.dp),
-                    color = if (index == activeIndex) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.36f),
-                    fontSize = if (index == activeIndex) 24.sp else 18.sp,
-                    lineHeight = if (index == activeIndex) 32.sp else 25.sp,
-                    fontWeight = if (index == activeIndex) FontWeight.Bold else FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                )
+            itemsIndexed(rows) { _, row ->
+                when (row) {
+                    is LyricLineRow -> {
+                        val isActive = row.index == activeLine
+                        Text(
+                            row.line.text,
+                            modifier = Modifier.fillMaxWidth().clickable { onSeek(row.line.timestampMs) }.padding(horizontal = 12.dp),
+                            color = if (isActive) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.36f),
+                            fontSize = if (isActive) 24.sp else 18.sp,
+                            lineHeight = if (isActive) 32.sp else 25.sp,
+                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    is InstrumentalRow -> InstrumentalBreak(
+                        startMs = row.startMs,
+                        endMs = row.endMs,
+                        position = position,
+                    )
+                }
             }
         }
     }

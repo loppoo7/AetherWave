@@ -21,6 +21,11 @@ object PlaybackPrefs {
             playbackSpeed = prefs.getFloat("speed", 1f),
             pitch = prefs.getFloat("pitch", 1f),
             soundStyle = if (styleName == CUSTOM) null else SoundStyle.entries.firstOrNull { it.name == styleName } ?: SoundStyle.NORMAL,
+            autoSkipOnError = prefs.getBoolean("auto_skip", true),
+            hapticsEnabled = prefs.getBoolean("haptics", true),
+            sponsorBlockEnabled = prefs.getBoolean("sponsor", true),
+            scrobbleEnabled = prefs.getBoolean("scrobble", false),
+            listenBrainzToken = prefs.getString("lb_token", "") ?: "",
         )
     }
 
@@ -33,6 +38,11 @@ object PlaybackPrefs {
             .putFloat("speed", state.playbackSpeed)
             .putFloat("pitch", state.pitch)
             .putString("sound_style", state.soundStyle?.name ?: CUSTOM)
+            .putBoolean("auto_skip", state.autoSkipOnError)
+            .putBoolean("haptics", state.hapticsEnabled)
+            .putBoolean("sponsor", state.sponsorBlockEnabled)
+            .putBoolean("scrobble", state.scrobbleEnabled)
+            .putString("lb_token", state.listenBrainzToken)
             .apply()
     }
 }

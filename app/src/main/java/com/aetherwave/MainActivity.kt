@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import com.aetherwave.core.crash.CrashReportDialog
 import com.aetherwave.core.crash.CrashReporter
 import com.aetherwave.core.designsystem.theme.AetherWaveTheme
+import com.aetherwave.core.designsystem.theme.AccentPalette
 import com.aetherwave.core.locale.AppLocale
 import android.content.Context
 import com.aetherwave.ui.navigation.AetherWaveApp
@@ -42,10 +43,18 @@ class MainActivity : ComponentActivity() {
                 "light" -> false
                 else -> systemDark
             }
-            AetherWaveTheme(darkTheme = darkTheme) {
+            AetherWaveTheme(
+                darkTheme = darkTheme,
+                accent = AccentPalette.fromKey(preferences.getString("accent", "default")),
+            ) {
                 AetherWaveApp(
                     darkTheme = darkTheme,
                     language = preferences.getString(AppLocale.KEY, AppLocale.SYSTEM) ?: AppLocale.SYSTEM,
+                    accent = preferences.getString("accent", "default") ?: "default",
+                    onAccentChanged = { key ->
+                        preferences.edit().putString("accent", key).apply()
+                        recreate()
+                    },
                     onLanguageChanged = { tag ->
                         preferences.edit().putString(AppLocale.KEY, tag).apply()
                         recreate()

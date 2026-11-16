@@ -15,7 +15,9 @@ object AppLocale {
     const val SYSTEM = "system"
 
     fun wrap(context: Context): Context {
-        val tag = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, SYSTEM) ?: SYSTEM
+        val stored = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, SYSTEM) ?: SYSTEM
+        // Android uses "id" for Indonesian. Older builds stored "in", so map it.
+        val tag = if (stored == "in") "id" else stored
         if (tag == SYSTEM) return context
         val locale = Locale.forLanguageTag(tag)
         val config = Configuration(context.resources.configuration)

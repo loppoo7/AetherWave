@@ -30,6 +30,15 @@ data class PlaybackState(
     val soundStyle: SoundStyle? = SoundStyle.NORMAL,
     /** Plays local files without speed, pitch, silence skipping, or normalization. */
     val pureMode: Boolean = false,
+    /** Skip to the next track when one cannot be played. */
+    val autoSkipOnError: Boolean = true,
+    /** Light vibration on play, pause, and skip. */
+    val hapticsEnabled: Boolean = true,
+    /** Skip sponsor, intro, outro, and non-music segments from SponsorBlock. */
+    val sponsorBlockEnabled: Boolean = true,
+    /** Send listens to ListenBrainz. Needs [listenBrainzToken]. */
+    val scrobbleEnabled: Boolean = false,
+    val listenBrainzToken: String = "",
 )
 
 @Immutable

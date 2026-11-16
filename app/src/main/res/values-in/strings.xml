@@ -53,4 +53,23 @@
     <string name="settings_pitch">Pitch</string>
     <string name="settings_version">Versi</string>
     <string name="settings_crash_note">Jika AetherWave crash, laporannya disimpan di HP dan ditampilkan saat app dibuka lagi.</string>
+    <string name="settings_auto_skip">Lewati lagu yang gagal</string>
+    <string name="settings_auto_skip_desc">Jika lagu tidak bisa diputar, langsung lanjut ke lagu berikutnya.</string>
+    <string name="settings_haptics">Getar saat tombol ditekan</string>
+    <string name="settings_haptics_desc">Getaran ringan saat memutar, menjeda, atau melewati lagu.</string>
+    <string name="settings_category_integrations">Integrasi</string>
+    <string name="settings_category_integrations_desc">SponsorBlock dan ListenBrainz</string>
+    <string name="settings_sponsorblock">Lewati bagian sponsor</string>
+    <string name="settings_sponsorblock_desc">Melewati bagian sponsor, intro, outro, dan non-musik di video YouTube (SponsorBlock).</string>
+    <string name="settings_scrobble">Catat ke ListenBrainz</string>
+    <string name="settings_scrobble_desc">Mengirim lagu yang kamu dengarkan. Perlu token pengguna ListenBrainz.</string>
+    <string name="settings_listenbrainz_token">Token pengguna ListenBrainz</string>
+    <string name="settings_listenbrainz_token_desc">Tempel token dari listenbrainz.org</string>
+    <string name="settings_accent">Warna aksen</string>
+    <string name="settings_accent_desc">Dipakai untuk sorotan dan tombol.</string>
+    <string name="accent_default">Standar</string>
+    <string name="accent_ocean">Laut</string>
+    <string name="accent_mint">Mint</string>
+    <string name="accent_amber">Amber</string>
+    <string name="accent_rose">Mawar</string>
 </resources>

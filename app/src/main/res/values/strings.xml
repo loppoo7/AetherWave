@@ -53,4 +53,23 @@
     <string name="settings_pitch">Pitch</string>
     <string name="settings_version">Version</string>
     <string name="settings_crash_note">If AetherWave crashes, the report is saved on your phone and shown the next time you open the app.</string>
+    <string name="settings_auto_skip">Skip songs that fail</string>
+    <string name="settings_auto_skip_desc">If a song cannot be played, go straight to the next one.</string>
+    <string name="settings_haptics">Haptic feedback</string>
+    <string name="settings_haptics_desc">A light vibration when you play, pause, or skip.</string>
+    <string name="settings_category_integrations">Integrations</string>
+    <string name="settings_category_integrations_desc">SponsorBlock and ListenBrainz</string>
+    <string name="settings_sponsorblock">Skip sponsor segments</string>
+    <string name="settings_sponsorblock_desc">Skips sponsor, intro, outro and non-music parts of YouTube videos (SponsorBlock).</string>
+    <string name="settings_scrobble">Scrobble to ListenBrainz</string>
+    <string name="settings_scrobble_desc">Sends what you listen to. Needs a ListenBrainz user token.</string>
+    <string name="settings_listenbrainz_token">ListenBrainz user token</string>
+    <string name="settings_listenbrainz_token_desc">Paste your token from listenbrainz.org</string>
+    <string name="settings_accent">Accent color</string>
+    <string name="settings_accent_desc">Used for highlights and buttons.</string>
+    <string name="accent_default">Default</string>
+    <string name="accent_ocean">Ocean</string>
+    <string name="accent_mint">Mint</string>
+    <string name="accent_amber">Amber</string>
+    <string name="accent_rose">Rose</string>
 </resources>

@@ -13,7 +13,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.aetherwave.data.source.youtube.YouTubeTrack
+import com.aetherwave.data.source.scrobble.ListenBrainzClient
+import com.aetherwave.data.source.sponsor.SponsorBlockClient
 import com.aetherwave.domain.model.MusicTrack
+import android.os.SystemClock
 import com.aetherwave.domain.model.TrackSource
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -47,6 +50,8 @@ import javax.inject.Singleton
 class PlaybackController @Inject constructor(
     @ApplicationContext private val context: Context,
     private val exoPlayer: ExoPlayer,
+    private val sponsorBlock: SponsorBlockClient,
+    private val listenBrainz: ListenBrainzClient,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val mutableState = MutableStateFlow(PlaybackPrefs.load(context))
@@ -64,6 +69,12 @@ class PlaybackController @Inject constructor(
     private var retryMediaId: String? = null
     private var retryCount = 0
     private var appliedVolume = -1f
+    private val sponsorSegments = ConcurrentHashMap<String, List<LongRange>>()
+    private var scrobbleMediaId: String? = null
+    private var scrobbleListenedMs = 0L
+    private var scrobbleLastTickMs = 0L
+    private var scrobbleSubmitted = false
+    private var scrobbleStartedAtSec = 0L
 
     @Synchronized
     fun connect() {
@@ -160,6 +171,41 @@ class PlaybackController @Inject constructor(
         if (target != appliedVolume) {
             appliedVolume = target
             exoPlayer.volume = target
+        }
+    }
+
+    fun setAutoSkipOnError(enabled: Boolean) {
+        scope.launch {
+            mutableState.update { it.copy(autoSkipOnError = enabled) }
+            PlaybackPrefs.save(context, mutableState.value)
+        }
+    }
+
+    fun setHapticsEnabled(enabled: Boolean) {
+        scope.launch {
+            mutableState.update { it.copy(hapticsEnabled = enabled) }
+            PlaybackPrefs.save(context, mutableState.value)
+        }
+    }
+
+    fun setSponsorBlockEnabled(enabled: Boolean) {
+        scope.launch {
+            mutableState.update { it.copy(sponsorBlockEnabled = enabled) }
+            PlaybackPrefs.save(context, mutableState.value)
+        }
+    }
+
+    fun setScrobbleEnabled(enabled: Boolean) {
+        scope.launch {
+            mutableState.update { it.copy(scrobbleEnabled = enabled) }
+            PlaybackPrefs.save(context, mutableState.value)
+        }
+    }
+
+    fun setListenBrainzToken(token: String) {
+        scope.launch {
+            mutableState.update { it.copy(listenBrainzToken = token.trim()) }
+            PlaybackPrefs.save(context, mutableState.value)
         }
     }
 
@@ -360,12 +406,16 @@ class PlaybackController @Inject constructor(
             if (playbackState == Player.STATE_READY) {
                 retryCount = 0
                 retryMediaId = null
+                if (mutableState.value.errorMessage != null) {
+                    mutableState.update { it.copy(errorMessage = null) }
+                }
             }
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             retryMediaId = null
             retryCount = 0
+            fetchSponsorSegments(mediaItem?.mediaId)
             // "End of track": the natural advance to the next item is blocked by pausing here.
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && state.value.sleepAtEndOfTrack) {
                 controller?.takeIf { it.isConnected }?.pause()
@@ -391,7 +441,18 @@ class PlaybackController @Inject constructor(
                 active.prepare()
                 return
             }
-            publishError(error, "This track could not be played. Try another result.")
+            if (mutableState.value.autoSkipOnError && active.hasNextMediaItem()) {
+                // Move on to the next song instead of stopping the queue on one bad source.
+                retryMediaId = null
+                retryCount = 0
+                active.seekToNextMediaItem()
+                active.play()
+                mutableState.update { it.copy(errorMessage = "Skipped a track that could not be played") }
+                return
+            }
+            mutableState.update {
+                it.copy(isPlaying = false, isBuffering = false, errorMessage = describeError(error))
+            }
         }
     }
 
@@ -415,6 +476,8 @@ class PlaybackController @Inject constructor(
         }
         applyNormalization(mediaId, musicTrack)
         syncAudioEffects(musicTrack)
+        applySponsorSkip(player, mediaId)
+        updateScrobble(player, musicTrack, mediaId)
         mutableState.update { previous ->
             previous.copy(
                 isPlaying = player.isPlaying,
@@ -430,6 +493,75 @@ class PlaybackController @Inject constructor(
                 queueSize = player.mediaItemCount,
             )
         }
+    }
+
+    /** Error code and the underlying cause, so the reason can be read on screen. */
+    private fun fetchSponsorSegments(mediaId: String?) {
+        if (!mutableState.value.sponsorBlockEnabled || mediaId == null || !mediaId.startsWith("youtube:")) return
+        val videoId = mediaId.removePrefix("youtube:")
+        if (sponsorSegments.containsKey(videoId)) return
+        scope.launch {
+            sponsorSegments[videoId] = sponsorBlock.segmentsFor(videoId)
+        }
+    }
+
+    /** Jumps past a sponsor or other skippable segment while it plays. */
+    private fun applySponsorSkip(player: Player, mediaId: String?) {
+        if (!mutableState.value.sponsorBlockEnabled || mediaId == null || !mediaId.startsWith("youtube:")) return
+        val segments = sponsorSegments[mediaId.removePrefix("youtube:")] ?: return
+        val position = player.currentPosition
+        val hit = segments.firstOrNull { position >= it.first && position < it.last } ?: return
+        player.seekTo(hit.last + 1)
+    }
+
+    /**
+     * Tracks listening time for ListenBrainz. A listen is submitted once half the track (or four
+     * minutes) has played, for tracks of at least 30 seconds, as the scrobbling rules require.
+     */
+    private fun updateScrobble(player: Player, track: MusicTrack?, mediaId: String?) {
+        val now = SystemClock.elapsedRealtime()
+        val settings = mutableState.value
+        if (mediaId != scrobbleMediaId) {
+            scrobbleMediaId = mediaId
+            scrobbleListenedMs = 0L
+            scrobbleSubmitted = false
+            scrobbleStartedAtSec = System.currentTimeMillis() / 1000
+            scrobbleLastTickMs = now
+            if (track != null && settings.scrobbleEnabled && settings.listenBrainzToken.isNotBlank()) {
+                submitPlayingNow(track)
+            }
+            return
+        }
+        if (player.isPlaying) scrobbleListenedMs += (now - scrobbleLastTickMs).coerceAtMost(2_000L)
+        scrobbleLastTickMs = now
+        if (scrobbleSubmitted || track == null || !settings.scrobbleEnabled) return
+        val duration = track.durationMs.takeIf { it > 0L } ?: player.duration.coerceAtLeast(0L)
+        val threshold = minOf(duration / 2, 240_000L)
+        if (duration >= 30_000L && scrobbleListenedMs >= threshold) {
+            scrobbleSubmitted = true
+            submitListen(track, scrobbleStartedAtSec)
+        }
+    }
+
+    private fun submitPlayingNow(track: MusicTrack) {
+        val token = mutableState.value.listenBrainzToken
+        if (track.artist.isBlank() || track.title.isBlank()) return
+        scope.launch {
+            runCatching { listenBrainz.playingNow(token, track.artist, track.title, track.album) }
+        }
+    }
+
+    private fun submitListen(track: MusicTrack, listenedAtSec: Long) {
+        val token = mutableState.value.listenBrainzToken
+        if (track.artist.isBlank() || track.title.isBlank()) return
+        scope.launch {
+            runCatching { listenBrainz.submitListen(token, track.artist, track.title, track.album, listenedAtSec) }
+        }
+    }
+
+    private fun describeError(error: PlaybackException): String {
+        val detail = error.cause?.message?.takeIf { it.isNotBlank() }?.take(120)
+        return listOfNotNull(error.errorCodeName, detail).joinToString(" · ")
     }
 
     private fun publishError(error: Throwable, fallback: String) {

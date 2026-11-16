@@ -38,13 +38,28 @@ private val AetherWaveLightColors = lightColorScheme(
     onError = Color(0xFFFFFFFF),
 )
 
+/** Accent colors for highlights. Light variants are darker so text stays readable on white. */
+enum class AccentPalette(val key: String, val dark: Color, val light: Color) {
+    DEFAULT("default", Color(0xFFE8E8EE), Color(0xFF1C1C22)),
+    OCEAN("ocean", Color(0xFF7FB8FF), Color(0xFF1F5FA8)),
+    MINT("mint", Color(0xFF7FE3C2), Color(0xFF1E7A5C)),
+    AMBER("amber", Color(0xFFFFC86B), Color(0xFF9A6200)),
+    ROSE("rose", Color(0xFFFF9AB5), Color(0xFFA3345E));
+
+    companion object {
+        fun fromKey(key: String?): AccentPalette = entries.firstOrNull { it.key == key } ?: DEFAULT
+    }
+}
+
 @Composable
 fun AetherWaveTheme(
     darkTheme: Boolean = true,
+    accent: AccentPalette = AccentPalette.DEFAULT,
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) AetherWaveDarkColors else AetherWaveLightColors,
-        content = content,
+    val base = if (darkTheme) AetherWaveDarkColors else AetherWaveLightColors
+    val scheme = if (accent == AccentPalette.DEFAULT) base else base.copy(
+        primary = if (darkTheme) accent.dark else accent.light,
     )
+    MaterialTheme(colorScheme = scheme, content = content)
 }

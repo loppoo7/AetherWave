@@ -24,6 +24,9 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,7 +54,7 @@ import com.aetherwave.playback.LoudnessLevel
 import com.aetherwave.playback.PlaybackState
 import com.aetherwave.playback.SoundStyle
 
-private enum class SettingsPage { HUB, APPEARANCE, SOUND, LANGUAGE, ABOUT }
+private enum class SettingsPage { HUB, APPEARANCE, SOUND, INTEGRATIONS, LANGUAGE, ABOUT }
 
 @Composable
 fun SettingsScreen(
@@ -69,6 +72,13 @@ fun SettingsScreen(
     onSetSoundStyle: (SoundStyle) -> Unit,
     onSetSpeed: (Float) -> Unit,
     onSetPitch: (Float) -> Unit,
+    onSetAutoSkip: (Boolean) -> Unit,
+    onSetHaptics: (Boolean) -> Unit,
+    accent: String,
+    onAccentChanged: (String) -> Unit,
+    onSetSponsorBlock: (Boolean) -> Unit,
+    onSetScrobble: (Boolean) -> Unit,
+    onSetListenBrainzToken: (String) -> Unit,
     onBack: () -> Unit,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.HUB) }
@@ -80,6 +90,7 @@ fun SettingsScreen(
         SettingsPage.SOUND -> stringResource(R.string.settings_category_sound)
         SettingsPage.LANGUAGE -> stringResource(R.string.settings_category_language)
         SettingsPage.ABOUT -> stringResource(R.string.settings_category_about)
+        SettingsPage.INTEGRATIONS -> stringResource(R.string.settings_category_integrations)
     }
 
     Column(
@@ -105,6 +116,8 @@ fun SettingsScreen(
             SettingsPage.APPEARANCE -> AppearancePage(
                 themeMode = themeMode,
                 onThemeModeChanged = onThemeModeChanged,
+                accent = accent,
+                onAccentChanged = onAccentChanged,
                 liquidGlassEnabled = liquidGlassEnabled,
                 onLiquidGlassChanged = onLiquidGlassChanged,
             )
@@ -117,8 +130,16 @@ fun SettingsScreen(
                 onSetSoundStyle = onSetSoundStyle,
                 onSetSpeed = onSetSpeed,
                 onSetPitch = onSetPitch,
+                onSetAutoSkip = onSetAutoSkip,
+                onSetHaptics = onSetHaptics,
             )
             SettingsPage.LANGUAGE -> LanguagePage(language = language, onLanguageChanged = onLanguageChanged)
+            SettingsPage.INTEGRATIONS -> IntegrationsPage(
+                playback = playback,
+                onSetSponsorBlock = onSetSponsorBlock,
+                onSetScrobble = onSetScrobble,
+                onSetListenBrainzToken = onSetListenBrainzToken,
+            )
             SettingsPage.ABOUT -> AboutPage()
         }
     }
@@ -136,6 +157,9 @@ private fun HubPage(onOpen: (SettingsPage) -> Unit) {
         HubRow(Icons.Rounded.Language, stringResource(R.string.settings_category_language), stringResource(R.string.settings_language_desc)) {
             onOpen(SettingsPage.LANGUAGE)
         }
+        HubRow(Icons.Rounded.Link, stringResource(R.string.settings_category_integrations), stringResource(R.string.settings_category_integrations_desc)) {
+            onOpen(SettingsPage.INTEGRATIONS)
+        }
         HubRow(Icons.Rounded.Info, stringResource(R.string.settings_category_about), stringResource(R.string.settings_category_about_desc)) {
             onOpen(SettingsPage.ABOUT)
         }
@@ -146,9 +170,28 @@ private fun HubPage(onOpen: (SettingsPage) -> Unit) {
 private fun AppearancePage(
     themeMode: String,
     onThemeModeChanged: (String) -> Unit,
+    accent: String,
+    onAccentChanged: (String) -> Unit,
     liquidGlassEnabled: Boolean,
     onLiquidGlassChanged: (Boolean) -> Unit,
 ) {
+    SettingsCard {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.settings_accent), color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.settings_accent_desc), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f), fontSize = 12.sp)
+            OptionChips(
+                options = listOf(
+                    "default" to stringResource(R.string.accent_default),
+                    "ocean" to stringResource(R.string.accent_ocean),
+                    "mint" to stringResource(R.string.accent_mint),
+                    "amber" to stringResource(R.string.accent_amber),
+                    "rose" to stringResource(R.string.accent_rose),
+                ),
+                selected = accent,
+                onSelect = onAccentChanged,
+            )
+        }
+    }
     SettingsCard {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.settings_theme), color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
@@ -183,7 +226,21 @@ private fun SoundPage(
     onSetSoundStyle: (SoundStyle) -> Unit,
     onSetSpeed: (Float) -> Unit,
     onSetPitch: (Float) -> Unit,
+    onSetAutoSkip: (Boolean) -> Unit,
+    onSetHaptics: (Boolean) -> Unit,
 ) {
+    SettingsCard {
+        SettingRow(
+            title = stringResource(R.string.settings_auto_skip),
+            subtitle = stringResource(R.string.settings_auto_skip_desc),
+            trailing = { Switch(checked = playback.autoSkipOnError, onCheckedChange = onSetAutoSkip) },
+        )
+        SettingRow(
+            title = stringResource(R.string.settings_haptics),
+            subtitle = stringResource(R.string.settings_haptics_desc),
+            trailing = { Switch(checked = playback.hapticsEnabled, onCheckedChange = onSetHaptics) },
+        )
+    }
     SettingsCard {
         SettingRow(
             title = stringResource(R.string.settings_normalize),
@@ -244,10 +301,44 @@ private fun LanguagePage(language: String, onLanguageChanged: (String) -> Unit) 
                 options = listOf(
                     "system" to stringResource(R.string.lang_system),
                     "en" to stringResource(R.string.lang_english),
-                    "in" to stringResource(R.string.lang_indonesian),
+                    "id" to stringResource(R.string.lang_indonesian),
                 ),
                 selected = language,
                 onSelect = onLanguageChanged,
+            )
+        }
+    }
+}
+
+@Composable
+private fun IntegrationsPage(
+    playback: PlaybackState,
+    onSetSponsorBlock: (Boolean) -> Unit,
+    onSetScrobble: (Boolean) -> Unit,
+    onSetListenBrainzToken: (String) -> Unit,
+) {
+    SettingsCard {
+        SettingRow(
+            title = stringResource(R.string.settings_sponsorblock),
+            subtitle = stringResource(R.string.settings_sponsorblock_desc),
+            trailing = { Switch(checked = playback.sponsorBlockEnabled, onCheckedChange = onSetSponsorBlock) },
+        )
+    }
+    SettingsCard {
+        SettingRow(
+            title = stringResource(R.string.settings_scrobble),
+            subtitle = stringResource(R.string.settings_scrobble_desc),
+            trailing = { Switch(checked = playback.scrobbleEnabled, onCheckedChange = onSetScrobble) },
+        )
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.settings_listenbrainz_token), color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            OutlinedTextField(
+                value = playback.listenBrainzToken,
+                onValueChange = onSetListenBrainzToken,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                placeholder = { Text(stringResource(R.string.settings_listenbrainz_token_desc)) },
             )
         }
     }

@@ -76,6 +76,8 @@ fun AetherWaveApp(
     onLiquidGlassChanged: (Boolean) -> Unit,
     language: String,
     onLanguageChanged: (String) -> Unit,
+    accent: String,
+    onAccentChanged: (String) -> Unit,
 ) {
     val navController = rememberNavController()
     val hazeState = rememberLiquidGlassState()
@@ -166,6 +168,13 @@ fun AetherWaveApp(
                     onSetSoundStyle = playerViewModel::setSoundStyle,
                     onSetSpeed = playerViewModel::setPlaybackSpeed,
                     onSetPitch = playerViewModel::setPitch,
+                    onSetAutoSkip = playerViewModel::setAutoSkipOnError,
+                    onSetHaptics = playerViewModel::setHapticsEnabled,
+                    accent = accent,
+                    onAccentChanged = onAccentChanged,
+                    onSetSponsorBlock = playerViewModel::setSponsorBlockEnabled,
+                    onSetScrobble = playerViewModel::setScrobbleEnabled,
+                    onSetListenBrainzToken = playerViewModel::setListenBrainzToken,
                     onBack = { navController.popBackStack() },
                 )
             }
