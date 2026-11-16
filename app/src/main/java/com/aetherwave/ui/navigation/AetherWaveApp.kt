@@ -135,6 +135,7 @@ fun AetherWaveApp(
             modifier = Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(bottom = if (isPlayerRoute) 0.dp else if (playerState.currentTrack != null) 180.dp else 100.dp),
         ) {
             composable("explore") {
+                LaunchedEffect(Unit) { exploreViewModel.ensureLoaded() }
                 ExploreScreen(
                     state = exploreState,
                     onPlayQueue = playerViewModel::playQueue,

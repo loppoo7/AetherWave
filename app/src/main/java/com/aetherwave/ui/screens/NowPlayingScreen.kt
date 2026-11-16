@@ -502,7 +502,6 @@ private fun <T> ChoiceChips(
     }
 }
 
-@Composable
 private sealed interface LyricRow {
     val startMs: Long
 }

@@ -37,7 +37,11 @@ class ExploreViewModel @Inject constructor(
                 mutableState.update { it.copy(topPlayed = tracks) }
             }
         }
-        refresh()
+    }
+
+    /** Loads the sections the first time the Explore screen opens. */
+    fun ensureLoaded() {
+        if (state.value.sections.isEmpty() && !state.value.isLoading) refresh()
     }
 
     fun refresh() {

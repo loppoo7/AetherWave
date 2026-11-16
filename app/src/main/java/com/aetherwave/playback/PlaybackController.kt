@@ -49,10 +49,12 @@ import javax.inject.Singleton
 @Singleton
 class PlaybackController @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val exoPlayer: ExoPlayer,
+    private val playerLazy: dagger.Lazy<ExoPlayer>,
     private val sponsorBlock: SponsorBlockClient,
     private val listenBrainz: ListenBrainzClient,
 ) {
+    /** Built on first use, so opening the app does not create the player or the audio cache. */
+    private val exoPlayer: ExoPlayer get() = playerLazy.get()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val mutableState = MutableStateFlow(PlaybackPrefs.load(context))
     val state: StateFlow<PlaybackState> = mutableState.asStateFlow()
@@ -461,7 +463,7 @@ class PlaybackController @Inject constructor(
         pollingJob = scope.launch {
             while (true) {
                 controller?.takeIf { it.isConnected }?.let(::publish)
-                delay(450)
+                delay(if (controller?.isPlaying == true) 450L else 1_500L)
             }
         }
     }

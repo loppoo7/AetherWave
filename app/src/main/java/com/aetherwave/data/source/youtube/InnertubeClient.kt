@@ -9,6 +9,9 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -149,22 +152,25 @@ class InnertubeClient @Inject constructor(
      */
     suspend fun playerAudioUrl(videoId: String): PlayerStream? {
         require(videoId.isNotBlank()) { "videoId must not be blank" }
-        for (client in PLAYER_CLIENTS) {
-            val stream = try {
-                fetchPlayerStream(client, videoId)
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                null
+        // The mobile clients run at the same time. The first one, in priority order, that returns a
+        // direct stream wins, and the rest are cancelled. Trying them one after another made every
+        // song wait for each failed client before playback could start.
+        return coroutineScope {
+            val attempts = PLAYER_CLIENTS.map { client ->
+                async {
+                    withTimeoutOrNull(CLIENT_TIMEOUT_MS) {
+                        runCatching { fetchPlayerStream(client, videoId) }.getOrNull()
+                    }
+                }
             }
-            if (stream != null) return stream
-        }
-        return try {
-            fetchWebRemixStream(videoId)
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
-            null
+            try {
+                attempts.firstNotNullOfOrNull { it.await() }
+                    ?: withTimeoutOrNull(CLIENT_TIMEOUT_MS) {
+                        runCatching { fetchWebRemixStream(videoId) }.getOrNull()
+                    }
+            } finally {
+                attempts.forEach { it.cancel() }
+            }
         }
     }
 
@@ -426,6 +432,7 @@ class InnertubeClient @Inject constructor(
 
     companion object {
         const val CLIENT_VERSION = "1.20241101.01.00"
+        const val CLIENT_TIMEOUT_MS = 8_000L
         const val SONG_FILTER_PARAMS = "EgWKAQIIAWoKEAMQBBAJEAoQBQ%3D%3D"
         const val ORIGIN = "https://music.youtube.com"
         const val REFERER = "https://music.youtube.com/"

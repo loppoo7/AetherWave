@@ -173,3 +173,10 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 - **Accent color.** Default, Ocean, Mint, Amber, and Rose. Set in Settings > Appearance.
 - **Language fix.** Indonesian is stored as "id", so the app switches language correctly.
 - **Error details.** Playback errors show the error code and its cause on screen.
+
+## 2.2
+
+- **Build fix.** A stray `@Composable` annotation on the lyric row interface caused a compile error. It is removed.
+- **Faster song start.** The mobile player clients run at the same time instead of one after another, each with an 8-second timeout.
+- **Faster app start.** The player and audio cache are created on first playback. Explore loads only when its screen opens.
+- **Less idle work.** Playback position updates every 1.5 seconds while paused, instead of every 450 ms.
