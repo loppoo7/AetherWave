@@ -73,6 +73,7 @@ class MainPlayerViewModel @Inject constructor(
                 .distinctUntilChangedBy { it?.id }
                 .collectLatest { track ->
                     mutableState.update { it.copy(lyrics = null, isLyricsLoading = track != null, message = null) }
+                    com.aetherwave.core.island.IslandLyrics.lines.value = emptyList()
                     if (track != null) {
                         try {
                             musicRepository.recordPlayback(track)
@@ -84,6 +85,7 @@ class MainPlayerViewModel @Inject constructor(
                         try {
                             val lyrics = musicRepository.getLyrics(track)
                             mutableState.update { it.copy(lyrics = lyrics, isLyricsLoading = false, message = null) }
+                            com.aetherwave.core.island.IslandLyrics.lines.value = lyrics.syncedLines
                         } catch (cancelled: CancellationException) {
                             throw cancelled
                         } catch (error: Exception) {

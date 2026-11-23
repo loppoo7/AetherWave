@@ -53,8 +53,16 @@ import com.aetherwave.R
 import com.aetherwave.playback.LoudnessLevel
 import com.aetherwave.playback.PlaybackState
 import com.aetherwave.playback.SoundStyle
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.material3.TextButton
+import kotlin.math.roundToInt
 
-private enum class SettingsPage { HUB, APPEARANCE, SOUND, INTEGRATIONS, LANGUAGE, ABOUT }
+private enum class SettingsPage { HUB, APPEARANCE, SOUND, INTEGRATIONS, LANGUAGE, ABOUT, ISLAND }
 
 @Composable
 fun SettingsScreen(
@@ -81,6 +89,9 @@ fun SettingsScreen(
     onSetListenBrainzToken: (String) -> Unit,
     dynamicIsland: Boolean,
     onDynamicIslandChanged: (Boolean) -> Unit,
+    islandX: Float,
+    islandY: Float,
+    onIslandPositionChanged: (Float, Float) -> Unit,
     onBack: () -> Unit,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.HUB) }
@@ -93,6 +104,7 @@ fun SettingsScreen(
         SettingsPage.LANGUAGE -> stringResource(R.string.settings_category_language)
         SettingsPage.ABOUT -> stringResource(R.string.settings_category_about)
         SettingsPage.INTEGRATIONS -> stringResource(R.string.settings_category_integrations)
+        SettingsPage.ISLAND -> stringResource(R.string.settings_island_title)
     }
 
     Column(
@@ -122,6 +134,7 @@ fun SettingsScreen(
                 onAccentChanged = onAccentChanged,
                 dynamicIsland = dynamicIsland,
                 onDynamicIslandChanged = onDynamicIslandChanged,
+                onOpenIsland = { page = SettingsPage.ISLAND },
                 liquidGlassEnabled = liquidGlassEnabled,
                 onLiquidGlassChanged = onLiquidGlassChanged,
             )
@@ -143,6 +156,11 @@ fun SettingsScreen(
                 onSetSponsorBlock = onSetSponsorBlock,
                 onSetScrobble = onSetScrobble,
                 onSetListenBrainzToken = onSetListenBrainzToken,
+            )
+            SettingsPage.ISLAND -> IslandPage(
+                islandX = islandX,
+                islandY = islandY,
+                onIslandPositionChanged = onIslandPositionChanged,
             )
             SettingsPage.ABOUT -> AboutPage()
         }
@@ -178,6 +196,7 @@ private fun AppearancePage(
     onAccentChanged: (String) -> Unit,
     dynamicIsland: Boolean,
     onDynamicIslandChanged: (Boolean) -> Unit,
+    onOpenIsland: () -> Unit,
     liquidGlassEnabled: Boolean,
     onLiquidGlassChanged: (Boolean) -> Unit,
 ) {
@@ -225,6 +244,11 @@ private fun AppearancePage(
             title = stringResource(R.string.settings_dynamic_island),
             subtitle = stringResource(R.string.settings_dynamic_island_desc),
             trailing = { Switch(checked = dynamicIsland, onCheckedChange = onDynamicIslandChanged) },
+        )
+        SettingRow(
+            title = stringResource(R.string.settings_island_customize),
+            subtitle = stringResource(R.string.settings_island_preview_desc),
+            trailing = { TextButton(onClick = onOpenIsland) { Text(stringResource(R.string.settings_island_customize)) } },
         )
     }
 }
@@ -353,6 +377,58 @@ private fun IntegrationsPage(
                 visualTransformation = PasswordVisualTransformation(),
                 placeholder = { Text(stringResource(R.string.settings_listenbrainz_token_desc)) },
             )
+        }
+    }
+}
+
+@Composable
+private fun IslandPage(
+    islandX: Float,
+    islandY: Float,
+    onIslandPositionChanged: (Float, Float) -> Unit,
+) {
+    var fx by remember(islandX) { mutableFloatStateOf(islandX) }
+    var fy by remember(islandY) { mutableFloatStateOf(islandY) }
+    Text(
+        stringResource(R.string.settings_island_hint),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+        fontSize = 12.sp,
+    )
+    BoxWithConstraints(
+        Modifier
+            .fillMaxWidth()
+            .height(520.dp)
+            .clip(RoundedCornerShape(36.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)),
+    ) {
+        val widthPx = constraints.maxWidth.toFloat()
+        val heightPx = constraints.maxHeight.toFloat()
+        Box(
+            Modifier
+                .align(Alignment.TopCenter)
+                .offset { IntOffset((fx * widthPx / 2f).roundToInt(), (fy * heightPx).roundToInt()) }
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDrag = { change, drag ->
+                            change.consume()
+                            fx = (fx + drag.x / (widthPx / 2f)).coerceIn(-1f, 1f)
+                            fy = (fy + drag.y / heightPx).coerceIn(0f, 0.4f)
+                        },
+                        onDragEnd = { onIslandPositionChanged(fx, fy) },
+                        onDragCancel = { onIslandPositionChanged(fx, fy) },
+                    )
+                }
+                .clip(RoundedCornerShape(50))
+                .background(Color(0xE6101216))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.size(width = 6.dp, height = 18.dp).clip(RoundedCornerShape(3.dp)).background(Color.White))
+                Column {
+                    Text("Song title", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text("Artist", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
+                }
+            }
         }
     }
 }

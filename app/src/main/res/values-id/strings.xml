@@ -74,4 +74,12 @@
     <string name="accent_rose">Mawar</string>
     <string name="settings_dynamic_island">Dynamic Island</string>
     <string name="settings_dynamic_island_desc">Pill mengambang di atas app lain saat musik diputar. Perlu izin tampil di atas app lain.</string>
+    <string name="island_no_lyrics">Tidak ada lirik tersinkron untuk lagu ini</string>
+    <string name="island_play_pause">Putar atau jeda</string>
+    <string name="island_previous">Sebelumnya</string>
+    <string name="island_next">Berikutnya</string>
+    <string name="settings_island_customize">Atur</string>
+    <string name="settings_island_title">Dynamic Island</string>
+    <string name="settings_island_preview_desc">Geser island ke tempat yang kamu mau. Bingkai ini mewakili layar kamu.</string>
+    <string name="settings_island_hint">Posisi disimpan saat kamu melepas jari. Ketuk island di app untuk melihat lirik dan kontrol.</string>
 </resources>

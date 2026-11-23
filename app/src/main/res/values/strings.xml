@@ -74,4 +74,12 @@
     <string name="accent_rose">Rose</string>
     <string name="settings_dynamic_island">Dynamic Island</string>
     <string name="settings_dynamic_island_desc">A floating pill over other apps while music plays. Needs permission to display over other apps.</string>
+    <string name="island_no_lyrics">No synced lyrics for this song</string>
+    <string name="island_play_pause">Play or pause</string>
+    <string name="island_previous">Previous</string>
+    <string name="island_next">Next</string>
+    <string name="settings_island_customize">Customize</string>
+    <string name="settings_island_title">Dynamic Island</string>
+    <string name="settings_island_preview_desc">Drag the island to where you want it. The frame stands for your screen.</string>
+    <string name="settings_island_hint">The position is saved when you let go. Tap the island in the app to open lyrics and controls.</string>
 </resources>

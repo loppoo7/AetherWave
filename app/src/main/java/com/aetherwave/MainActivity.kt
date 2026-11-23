@@ -72,6 +72,11 @@ class MainActivity : ComponentActivity() {
                     darkTheme = darkTheme,
                     language = preferences.getString(AppLocale.KEY, AppLocale.SYSTEM) ?: AppLocale.SYSTEM,
                     dynamicIsland = preferences.getBoolean("dynamic_island", false),
+                    islandX = com.aetherwave.core.island.IslandPrefs.read(this).first,
+                    islandY = com.aetherwave.core.island.IslandPrefs.read(this).second,
+                    onIslandPositionChanged = { x, y ->
+                        com.aetherwave.core.island.IslandPrefs.write(this@MainActivity, x, y)
+                    },
                     onDynamicIslandChanged = { enabled ->
                         if (enabled && !Settings.canDrawOverlays(this@MainActivity)) {
                             // Send the user to the permission screen. The setting is saved once permission is granted.

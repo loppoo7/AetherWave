@@ -80,6 +80,9 @@ fun AetherWaveApp(
     onAccentChanged: (String) -> Unit,
     dynamicIsland: Boolean,
     onDynamicIslandChanged: (Boolean) -> Unit,
+    islandX: Float,
+    islandY: Float,
+    onIslandPositionChanged: (Float, Float) -> Unit,
 ) {
     val navController = rememberNavController()
     val hazeState = rememberLiquidGlassState()
@@ -177,6 +180,9 @@ fun AetherWaveApp(
                     onAccentChanged = onAccentChanged,
                     dynamicIsland = dynamicIsland,
                     onDynamicIslandChanged = onDynamicIslandChanged,
+                    islandX = islandX,
+                    islandY = islandY,
+                    onIslandPositionChanged = onIslandPositionChanged,
                     onSetSponsorBlock = playerViewModel::setSponsorBlockEnabled,
                     onSetScrobble = playerViewModel::setScrobbleEnabled,
                     onSetListenBrainzToken = playerViewModel::setListenBrainzToken,

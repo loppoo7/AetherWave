@@ -195,3 +195,10 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 ## 2.5
 
 - **Dynamic Island.** A floating pill at the top of the screen shows the current song over other apps while music plays. Tap it to open AetherWave, or use its button to play or pause. Turn it on in Settings > Appearance. It needs the "Display over other apps" permission, which the app asks for. The pill appears when the app leaves the foreground and disappears when it returns.
+
+## 2.6
+
+- **Dynamic Island.** The pill shows an animated equaliser, the song title, and a play or pause button.
+- **Tap to expand.** The card shows the current lyric, the next line, a progress bar, and previous and next buttons.
+- **Drag to move.** Drag the island anywhere on the screen. The position is saved when you let go.
+- **Position preview.** Settings > Appearance > Dynamic Island > Customize shows a screen frame where you can drag the island to set its place.
