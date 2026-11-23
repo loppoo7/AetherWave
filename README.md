@@ -202,3 +202,7 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 - **Tap to expand.** The card shows the current lyric, the next line, a progress bar, and previous and next buttons.
 - **Drag to move.** Drag the island anywhere on the screen. The position is saved when you let go.
 - **Position preview.** Settings > Appearance > Dynamic Island > Customize shows a screen frame where you can drag the island to set its place.
+
+## 2.7
+
+- **Build fixes.** The `height` modifier is imported in Settings, and the lyric list reads a nullable value safely.

@@ -85,7 +85,7 @@ class MainPlayerViewModel @Inject constructor(
                         try {
                             val lyrics = musicRepository.getLyrics(track)
                             mutableState.update { it.copy(lyrics = lyrics, isLyricsLoading = false, message = null) }
-                            com.aetherwave.core.island.IslandLyrics.lines.value = lyrics.syncedLines
+                            com.aetherwave.core.island.IslandLyrics.lines.value = lyrics?.syncedLines.orEmpty()
                         } catch (cancelled: CancellationException) {
                             throw cancelled
                         } catch (error: Exception) {

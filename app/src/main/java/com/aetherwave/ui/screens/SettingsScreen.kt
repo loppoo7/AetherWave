@@ -61,6 +61,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.material3.TextButton
 import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.height
 
 private enum class SettingsPage { HUB, APPEARANCE, SOUND, INTEGRATIONS, LANGUAGE, ABOUT, ISLAND }
 
