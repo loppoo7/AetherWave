@@ -185,3 +185,13 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Auto-skip is off by default.** It is an option in Settings > Sound & playback.
 - **Clearer playback errors.** When a song cannot be played, the message lists the step that failed, for example each Innertube client's reason, then NewPipe's error. Use this text to diagnose stream failures.
+
+## 2.4
+
+- **NewPipe fallback fixed.** The stream lookup builds the link from the video ID. The URL route called `URLDecoder.decode(String, Charset)`, which Android 10 does not have, so every song failed at that step.
+- **Square cover.** The Now Playing artwork is a square that scales to the screen width instead of a cropped strip.
+- Innertube clients are still blocked by YouTube's "not a bot" check on this account, so playback depends on the NewPipe fallback.
+
+## 2.5
+
+- **Dynamic Island.** A floating pill at the top of the screen shows the current song over other apps while music plays. Tap it to open AetherWave, or use its button to play or pause. Turn it on in Settings > Appearance. It needs the "Display over other apps" permission, which the app asks for. The pill appears when the app leaves the foreground and disappears when it returns.

@@ -72,4 +72,6 @@
     <string name="accent_mint">Mint</string>
     <string name="accent_amber">Amber</string>
     <string name="accent_rose">Mawar</string>
+    <string name="settings_dynamic_island">Dynamic Island</string>
+    <string name="settings_dynamic_island_desc">Pill mengambang di atas app lain saat musik diputar. Perlu izin tampil di atas app lain.</string>
 </resources>

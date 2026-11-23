@@ -17,11 +17,32 @@ import com.aetherwave.core.locale.AppLocale
 import android.content.Context
 import com.aetherwave.ui.navigation.AetherWaveApp
 import dagger.hilt.android.AndroidEntryPoint
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import com.aetherwave.core.island.DynamicIslandOverlay
+import com.aetherwave.playback.PlaybackController
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var playbackController: PlaybackController
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLocale.wrap(newBase))
+    }
+
+    override fun onStart() {
+        super.onStart()
+        DynamicIslandOverlay.hide()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val enabled = getSharedPreferences("aetherwave_preferences", MODE_PRIVATE).getBoolean("dynamic_island", false)
+        if (enabled && Settings.canDrawOverlays(this)) {
+            DynamicIslandOverlay.show(this, playbackController)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +71,19 @@ class MainActivity : ComponentActivity() {
                 AetherWaveApp(
                     darkTheme = darkTheme,
                     language = preferences.getString(AppLocale.KEY, AppLocale.SYSTEM) ?: AppLocale.SYSTEM,
+                    dynamicIsland = preferences.getBoolean("dynamic_island", false),
+                    onDynamicIslandChanged = { enabled ->
+                        if (enabled && !Settings.canDrawOverlays(this@MainActivity)) {
+                            // Send the user to the permission screen. The setting is saved once permission is granted.
+                            startActivity(
+                                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")),
+                            )
+                        } else {
+                            preferences.edit().putBoolean("dynamic_island", enabled).apply()
+                            if (!enabled) DynamicIslandOverlay.hide()
+                            recreate()
+                        }
+                    },
                     accent = preferences.getString("accent", "default") ?: "default",
                     onAccentChanged = { key ->
                         preferences.edit().putString("accent", key).apply()

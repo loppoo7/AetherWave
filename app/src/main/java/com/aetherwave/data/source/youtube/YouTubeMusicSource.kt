@@ -7,6 +7,7 @@ import org.schabi.newpipe.extractor.ServiceList
 import org.schabi.newpipe.extractor.Image
 import org.schabi.newpipe.extractor.stream.AudioStream
 import org.schabi.newpipe.extractor.stream.StreamInfo
+import org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeStreamLinkHandlerFactory
 import org.schabi.newpipe.extractor.stream.StreamType
 import org.schabi.newpipe.extractor.search.SearchExtractor
 import org.schabi.newpipe.extractor.stream.StreamInfoItem
@@ -56,7 +57,12 @@ class YouTubeMusicSource @Inject constructor(
         require(videoUrl.startsWith("https://")) { "A valid YouTube URL is required" }
         ensureInitialized()
         try {
-            val info = StreamInfo.getInfo(ServiceList.YouTube, videoUrl)
+            // Build the link from the video ID. Passing a URL makes NewPipe check every link type, and that
+            // check calls URLDecoder.decode(String, Charset), which Android 10 does not have.
+            val videoId = videoUrl.substringAfter("v=", "").substringBefore("&")
+            require(videoId.isNotBlank()) { "No video id in the YouTube URL" }
+            val handler = YoutubeStreamLinkHandlerFactory.getInstance().fromId(videoId)
+            val info = StreamInfo.getInfo(ServiceList.YouTube.getStreamExtractor(handler))
             val stream = info.audioStreams
                 .filter { it.isUrl && it.content.isNotBlank() }
                 .maxWithOrNull(

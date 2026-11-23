@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -201,7 +203,7 @@ fun NowPlayingScreen(
                                 model = track.artworkUri,
                                 contentDescription = "Album artwork for ${track.title}",
                                 contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxWidth(0.82f).height(300.dp)
+                                modifier = Modifier.fillMaxWidth(0.86f).widthIn(max = 380.dp).aspectRatio(1f)
                                     .shadow(28.dp, RoundedCornerShape(30.dp), ambientColor = palette.primary, spotColor = palette.primary)
                                     .clip(RoundedCornerShape(30.dp))
                                     .pointerInput(track.id) {

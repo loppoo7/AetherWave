@@ -79,6 +79,8 @@ fun SettingsScreen(
     onSetSponsorBlock: (Boolean) -> Unit,
     onSetScrobble: (Boolean) -> Unit,
     onSetListenBrainzToken: (String) -> Unit,
+    dynamicIsland: Boolean,
+    onDynamicIslandChanged: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.HUB) }
@@ -118,6 +120,8 @@ fun SettingsScreen(
                 onThemeModeChanged = onThemeModeChanged,
                 accent = accent,
                 onAccentChanged = onAccentChanged,
+                dynamicIsland = dynamicIsland,
+                onDynamicIslandChanged = onDynamicIslandChanged,
                 liquidGlassEnabled = liquidGlassEnabled,
                 onLiquidGlassChanged = onLiquidGlassChanged,
             )
@@ -172,6 +176,8 @@ private fun AppearancePage(
     onThemeModeChanged: (String) -> Unit,
     accent: String,
     onAccentChanged: (String) -> Unit,
+    dynamicIsland: Boolean,
+    onDynamicIslandChanged: (Boolean) -> Unit,
     liquidGlassEnabled: Boolean,
     onLiquidGlassChanged: (Boolean) -> Unit,
 ) {
@@ -212,6 +218,13 @@ private fun AppearancePage(
             title = stringResource(R.string.settings_liquid_glass),
             subtitle = stringResource(R.string.settings_liquid_glass_desc),
             trailing = { Switch(checked = liquidGlassEnabled, onCheckedChange = onLiquidGlassChanged) },
+        )
+    }
+    SettingsCard {
+        SettingRow(
+            title = stringResource(R.string.settings_dynamic_island),
+            subtitle = stringResource(R.string.settings_dynamic_island_desc),
+            trailing = { Switch(checked = dynamicIsland, onCheckedChange = onDynamicIslandChanged) },
         )
     }
 }

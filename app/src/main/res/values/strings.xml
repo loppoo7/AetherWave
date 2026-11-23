@@ -72,4 +72,6 @@
     <string name="accent_mint">Mint</string>
     <string name="accent_amber">Amber</string>
     <string name="accent_rose">Rose</string>
+    <string name="settings_dynamic_island">Dynamic Island</string>
+    <string name="settings_dynamic_island_desc">A floating pill over other apps while music plays. Needs permission to display over other apps.</string>
 </resources>
