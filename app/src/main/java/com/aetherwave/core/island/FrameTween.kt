@@ -18,7 +18,7 @@ class FrameTween(
     private var startNs = 0L
     private var running = false
 
-    private val callback = Choreographer.FrameCallback { frameNs ->
+    private val callback: Choreographer.FrameCallback = Choreographer.FrameCallback { frameNs ->
         if (!running) return@FrameCallback
         if (startNs == 0L) startNs = frameNs
         val linear = ((frameNs - startNs) / 1_000_000f / durationMs).coerceIn(0f, 1f)

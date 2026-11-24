@@ -228,3 +228,7 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Material You is the default theme.** The colours follow the wallpaper on Android 12 and newer, and the app uses its usual palette on older versions. There is no switch for it.
 - **Settings** keep only the Liquid Glass switch, which is off by default.
+
+## 3.1
+
+- **Build fixes.** The island's corner radius is converted to a float. Two frame callbacks in the island animation have explicit types, so the compiler no longer reports a recursive type error.

@@ -490,7 +490,7 @@ object DynamicIslandOverlay {
             minimumWidth = dp(context, 220)
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
-                cornerRadius = dpF(context, IslandPrefs.cornerDp(look.corner))
+                cornerRadius = dpF(context, IslandPrefs.cornerDp(look.corner)).toFloat()
                 setColor(pillColor)
                 if (glass) setStroke(2, 0x1AFFFFFF)
             }

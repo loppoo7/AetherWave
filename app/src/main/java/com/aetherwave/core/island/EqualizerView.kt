@@ -22,7 +22,7 @@ class EqualizerView(context: Context) : View(context) {
     private var playing = false
     private var startNs = 0L
 
-    private val frame = Choreographer.FrameCallback { frameNs ->
+    private val frame: Choreographer.FrameCallback = Choreographer.FrameCallback { frameNs ->
         if (!playing) return@FrameCallback
         if (startNs == 0L) startNs = frameNs
         phase = ((frameNs - startNs) / 1_000_000f) * (2f * PI.toFloat() / 900f)
