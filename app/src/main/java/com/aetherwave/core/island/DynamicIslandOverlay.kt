@@ -12,6 +12,7 @@ import android.os.Build
 import android.provider.Settings
 import android.text.TextUtils
 import android.util.TypedValue
+import android.view.Choreographer
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -73,6 +74,17 @@ object DynamicIslandOverlay {
     private var equalizers: List<EqualizerView> = emptyList()
     private var coverEqualizers: List<EqualizerView> = emptyList()
     private var coverViews: List<ImageView> = emptyList()
+    private var coverBoxes: List<View> = emptyList()
+    private var spinning = false
+    private var spinStartNs = 0L
+    private val spinFrame: Choreographer.FrameCallback = Choreographer.FrameCallback { frameNs ->
+        if (!spinning) return@FrameCallback
+        if (spinStartNs == 0L) spinStartNs = frameNs
+        // One full turn every 6 seconds, like a record or a cassette reel.
+        val angle = ((frameNs - spinStartNs) / 1_000_000f % 6000f) / 6000f * 360f
+        coverBoxes.forEach { it.rotation = angle }
+        Choreographer.getInstance().postFrameCallback(spinFrame)
+    }
     private var artworkUrl: String? = null
     private var artworkJob: Job? = null
     private val http by lazy {
@@ -152,6 +164,8 @@ object DynamicIslandOverlay {
         equalizers = emptyList()
         coverEqualizers = emptyList()
         coverViews = emptyList()
+        setSpinning(false)
+        coverBoxes = emptyList()
         artworkUrl = null
         artworkJob?.cancel()
         expanded = false
@@ -168,6 +182,7 @@ object DynamicIslandOverlay {
         artist?.text = track.artist
         updateArtwork(track.artworkUri)
         equalizers.forEach { it.setPlaying(playback.isPlaying) }
+        setSpinning(playback.isPlaying)
         playButton?.setImageResource(
             if (playback.isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
         )
@@ -193,6 +208,17 @@ object DynamicIslandOverlay {
     private fun formatTime(ms: Long): String {
         val seconds = (ms / 1000).coerceAtLeast(0L)
         return "%d:%02d".format(seconds / 60, seconds % 60)
+    }
+
+    private fun setSpinning(on: Boolean) {
+        if (on == spinning) return
+        spinning = on
+        if (on) {
+            spinStartNs = 0L
+            Choreographer.getInstance().postFrameCallback(spinFrame)
+        } else {
+            Choreographer.getInstance().removeFrameCallback(spinFrame)
+        }
     }
 
     /** Loads the song's cover once per track. Until it arrives, the equaliser stays visible. */
@@ -346,7 +372,10 @@ object DynamicIslandOverlay {
             layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
         }
         val box = FrameLayout(context).apply {
-            background = roundedFill(context, 0x33FFFFFF, 10f)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0x33FFFFFF)
+            }
             clipToOutline = true
             outlineProvider = ViewOutlineProvider.BACKGROUND
             layoutParams = LinearLayout.LayoutParams(dp(context, sizeDp), dp(context, sizeDp))
@@ -361,7 +390,7 @@ object DynamicIslandOverlay {
         val pillColor = if (glass) 0xCC1E2128.toInt() else Color.BLACK
 
         // Compact row: cover on the left, equaliser bars on the right.
-        val (compactCover, compactEq, compactImage) = coverBox(context, 34)
+        val (compactCover, compactEq, compactImage) = coverBox(context, 30)
         val compactBars = EqualizerView(context).apply {
             layoutParams = LinearLayout.LayoutParams(dp(context, 22), dp(context, 16)).apply {
                 leftMargin = dp(context, 8)
@@ -370,14 +399,14 @@ object DynamicIslandOverlay {
         val compactRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(context, 8), dp(context, 6), dp(context, 12), dp(context, 6))
+            setPadding(dp(context, 6), dp(context, 5), dp(context, 10), dp(context, 5))
             addView(compactCover)
             addView(View(context), LinearLayout.LayoutParams(0, 1, 1f))
             addView(compactBars)
         }
 
         // Expanded card.
-        val (expandedCover, expandedEq, expandedImage) = coverBox(context, 44)
+        val (expandedCover, expandedEq, expandedImage) = coverBox(context, 58)
         val titleView = TextView(context).apply {
             setTextColor(Color.WHITE)
             textSize = 15f
@@ -465,6 +494,7 @@ object DynamicIslandOverlay {
         val expandedColumn = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             pivotY = 0f
+            minimumWidth = dp(context, 300)
             setPadding(dp(context, 14), dp(context, 4), dp(context, 14), dp(context, 12))
             visibility = View.GONE
             addView(header)
@@ -487,7 +517,7 @@ object DynamicIslandOverlay {
 
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            minimumWidth = dp(context, 220)
+            minimumWidth = dp(context, 190)
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dpF(context, IslandPrefs.cornerDp(look.corner)).toFloat()
@@ -509,6 +539,7 @@ object DynamicIslandOverlay {
         equalizers = listOf(compactEq, compactBars, expandedEq)
         coverEqualizers = listOf(compactEq, expandedEq)
         coverViews = listOf(compactImage, expandedImage)
+        coverBoxes = listOf(compactCover, expandedCover)
         return root
     }
 

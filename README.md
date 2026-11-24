@@ -232,3 +232,8 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 ## 3.1
 
 - **Build fixes.** The island's corner radius is converted to a float. Two frame callbacks in the island animation have explicit types, so the compiler no longer reports a recursive type error.
+
+## 3.2
+
+- **Smaller island.** The compact pill is 190 × 40 dp, instead of a wide bar. Expanded, it is 300 dp wide.
+- **Spinning cover.** The cover is a circle that turns once every 6 seconds while the song plays, and stops when paused. The motion runs on the frame clock.
