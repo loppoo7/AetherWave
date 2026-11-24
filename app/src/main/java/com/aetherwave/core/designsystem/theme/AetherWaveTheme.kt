@@ -5,6 +5,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import android.os.Build
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.ui.platform.LocalContext
 
 private val AetherWaveDarkColors = darkColorScheme(
     primary = Color(0xFFE8E8EE),
@@ -55,11 +59,18 @@ enum class AccentPalette(val key: String, val dark: Color, val light: Color) {
 fun AetherWaveTheme(
     darkTheme: Boolean = true,
     accent: AccentPalette = AccentPalette.DEFAULT,
+    materialYou: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val base = if (darkTheme) AetherWaveDarkColors else AetherWaveLightColors
-    val scheme = if (accent == AccentPalette.DEFAULT) base else base.copy(
-        primary = if (darkTheme) accent.dark else accent.light,
-    )
+    val context = LocalContext.current
+    val scheme = if (materialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // Material You: colours come from the wallpaper. Needs Android 12 or newer.
+        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        val base = if (darkTheme) AetherWaveDarkColors else AetherWaveLightColors
+        if (accent == AccentPalette.DEFAULT) base else base.copy(
+            primary = if (darkTheme) accent.dark else accent.light,
+        )
+    }
     MaterialTheme(colorScheme = scheme, content = content)
 }

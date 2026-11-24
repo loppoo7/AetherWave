@@ -216,3 +216,15 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Animations work with developer options off.** The island's motion runs on the display's frame clock, not on the system animation scale. Entry, expand and collapse, text changes, button bounce, and the equaliser all animate.
 - **Blur on press.** Pressing the island blurs the content behind it slightly. It needs Android 12 or newer. On older versions, the press has no blur.
+
+## 3.0
+
+- **Dynamic Island cover art.** The island shows the song's cover. Until it loads, the equaliser shows.
+- **Dynamic Island motion.** Expanding uses an ease with a small overshoot, so it settles like a spring.
+- **Material You (new, off by default).** Settings > Appearance > Material You. Colours follow the wallpaper on Android 12 and newer. Liquid Glass is still a separate setting, off by default.
+- Not tested on a device. Check the island, the cover, and both settings after installing.
+
+## 3.0 (update)
+
+- **Material You is the default theme.** The colours follow the wallpaper on Android 12 and newer, and the app uses its usual palette on older versions. There is no switch for it.
+- **Settings** keep only the Liquid Glass switch, which is off by default.

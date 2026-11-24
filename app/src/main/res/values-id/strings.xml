@@ -82,4 +82,6 @@
     <string name="settings_island_title">Dynamic Island</string>
     <string name="settings_island_preview_desc">Geser island ke tempat yang kamu mau. Bingkai ini mewakili layar kamu.</string>
     <string name="settings_island_hint">Posisi disimpan saat kamu melepas jari. Ketuk island di app untuk melihat lirik dan kontrol.</string>
-    <string name="island_style_classic">Klasik</string>\n    <string name="island_style_glass">Kaca</string>\n    <string name="island_corner">Kelengkungan sudut</string>\n    <string name="island_preview_title">Judul lagu</string>\n    <string name="island_preview_artist">Artis</string>\n</resources>
+    <string name="island_style_classic">Klasik</string>\n    <string name="island_style_glass">Kaca</string>\n    <string name="island_corner">Kelengkungan sudut</string>\n    <string name="island_preview_title">Judul lagu</string>\n    <string name="island_preview_artist">Artis</string>\n    <string name="settings_material_you">Material You</string>
+    <string name="settings_material_you_desc">Warna mengikuti wallpaper. Perlu Android 12 atau lebih baru.</string>
+</resources>

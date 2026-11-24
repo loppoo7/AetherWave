@@ -67,10 +67,13 @@ class MainActivity : ComponentActivity() {
             AetherWaveTheme(
                 darkTheme = darkTheme,
                 accent = AccentPalette.fromKey(preferences.getString("accent", "default")),
+                materialYou = true,
             ) {
                 AetherWaveApp(
                     darkTheme = darkTheme,
                     language = preferences.getString(AppLocale.KEY, AppLocale.SYSTEM) ?: AppLocale.SYSTEM,
+                    materialYou = true,
+                    onMaterialYouChanged = { _ -> },
                     dynamicIsland = preferences.getBoolean("dynamic_island", false),
                     islandX = com.aetherwave.core.island.IslandPrefs.read(this).first,
                     islandY = com.aetherwave.core.island.IslandPrefs.read(this).second,

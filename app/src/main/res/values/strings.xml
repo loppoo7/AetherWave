@@ -82,4 +82,6 @@
     <string name="settings_island_title">Dynamic Island</string>
     <string name="settings_island_preview_desc">Drag the island to where you want it. The frame stands for your screen.</string>
     <string name="settings_island_hint">The position is saved when you let go. Tap the island in the app to open lyrics and controls.</string>
-    <string name="island_style_classic">Classic</string>\n    <string name="island_style_glass">Glass</string>\n    <string name="island_corner">Corner roundness</string>\n    <string name="island_preview_title">Song title</string>\n    <string name="island_preview_artist">Artist</string>\n</resources>
+    <string name="island_style_classic">Classic</string>\n    <string name="island_style_glass">Glass</string>\n    <string name="island_corner">Corner roundness</string>\n    <string name="island_preview_title">Song title</string>\n    <string name="island_preview_artist">Artist</string>\n    <string name="settings_material_you">Material You</string>
+    <string name="settings_material_you_desc">Colors follow your wallpaper. Needs Android 12 or newer.</string>
+</resources>

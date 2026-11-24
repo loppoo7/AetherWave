@@ -102,6 +102,8 @@ fun SettingsScreen(
     islandStyle: String,
     islandCorner: Float,
     onIslandLookChanged: (String, Float) -> Unit,
+    materialYou: Boolean,
+    onMaterialYouChanged: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.HUB) }
@@ -145,6 +147,8 @@ fun SettingsScreen(
                 dynamicIsland = dynamicIsland,
                 onDynamicIslandChanged = onDynamicIslandChanged,
                 onOpenIsland = { page = SettingsPage.ISLAND },
+                materialYou = materialYou,
+                onMaterialYouChanged = onMaterialYouChanged,
                 liquidGlassEnabled = liquidGlassEnabled,
                 onLiquidGlassChanged = onLiquidGlassChanged,
             )
@@ -210,6 +214,8 @@ private fun AppearancePage(
     dynamicIsland: Boolean,
     onDynamicIslandChanged: (Boolean) -> Unit,
     onOpenIsland: () -> Unit,
+    materialYou: Boolean,
+    onMaterialYouChanged: (Boolean) -> Unit,
     liquidGlassEnabled: Boolean,
     onLiquidGlassChanged: (Boolean) -> Unit,
 ) {
@@ -252,6 +258,7 @@ private fun AppearancePage(
             trailing = { Switch(checked = liquidGlassEnabled, onCheckedChange = onLiquidGlassChanged) },
         )
     }
+
     SettingsCard {
         SettingRow(
             title = stringResource(R.string.settings_dynamic_island),

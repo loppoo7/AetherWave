@@ -1,6 +1,8 @@
 package com.aetherwave.core.island
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
@@ -14,9 +16,11 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.aetherwave.R
@@ -30,6 +34,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -63,6 +71,13 @@ object DynamicIslandOverlay {
     private var progressBar: View? = null
     private var playButton: ImageButton? = null
     private var equalizers: List<EqualizerView> = emptyList()
+    private var coverEqualizers: List<EqualizerView> = emptyList()
+    private var coverViews: List<ImageView> = emptyList()
+    private var artworkUrl: String? = null
+    private var artworkJob: Job? = null
+    private val http by lazy {
+        OkHttpClient.Builder().callTimeout(8, TimeUnit.SECONDS).build()
+    }
     private var expanded = false
     private var stateJob: Job? = null
     private var expandTween: FrameTween? = null
@@ -135,6 +150,10 @@ object DynamicIslandOverlay {
         progressBar = null
         playButton = null
         equalizers = emptyList()
+        coverEqualizers = emptyList()
+        coverViews = emptyList()
+        artworkUrl = null
+        artworkJob?.cancel()
         expanded = false
         if (view != null && wm != null) runCatching { wm.removeView(view) }
     }
@@ -147,6 +166,7 @@ object DynamicIslandOverlay {
         }
         title?.text = track.title
         artist?.text = track.artist
+        updateArtwork(track.artworkUri)
         equalizers.forEach { it.setPlaying(playback.isPlaying) }
         playButton?.setImageResource(
             if (playback.isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play,
@@ -175,6 +195,42 @@ object DynamicIslandOverlay {
         return "%d:%02d".format(seconds / 60, seconds % 60)
     }
 
+    /** Loads the song's cover once per track. Until it arrives, the equaliser stays visible. */
+    private fun updateArtwork(url: String?) {
+        if (url == artworkUrl) return
+        artworkUrl = url
+        artworkJob?.cancel()
+        if (url.isNullOrBlank()) {
+            showCover(null)
+            return
+        }
+        artworkJob = scope.launch {
+            val bitmap = withContext(Dispatchers.IO) { runCatching { fetchBitmap(url) }.getOrNull() }
+            if (artworkUrl == url) showCover(bitmap)
+        }
+    }
+
+    private fun fetchBitmap(url: String): Bitmap? =
+        http.newCall(Request.Builder().url(url).build()).execute().use { response ->
+            if (!response.isSuccessful) {
+                null
+            } else {
+                response.body?.byteStream()?.use { stream ->
+                    BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply { inSampleSize = 2 })
+                }
+            }
+        }
+
+    private fun showCover(bitmap: Bitmap?) {
+        coverViews.forEach { view ->
+            view.setImageBitmap(bitmap)
+            view.visibility = if (bitmap != null) View.VISIBLE else View.GONE
+        }
+        coverEqualizers.forEach { eq ->
+            eq.visibility = if (bitmap != null) View.GONE else View.VISIBLE
+        }
+    }
+
     private fun setTextFading(view: TextView?, text: String) {
         if (view == null || view.text.toString() == text) return
         view.text = text
@@ -187,7 +243,7 @@ object DynamicIslandOverlay {
         expandTween?.cancel()
         if (open) {
             part.visibility = View.VISIBLE
-            expandTween = FrameTween(EXPAND_MS) { t ->
+            expandTween = FrameTween(EXPAND_MS, easing = ::easeOutBack) { t ->
                 part.alpha = t
                 part.scaleY = 0.8f + 0.2f * t
                 part.translationY = -dpF(part.context, 6f) * (1f - t)
@@ -279,17 +335,25 @@ object DynamicIslandOverlay {
             setColor(color)
         }
 
-    /** A rounded square holding a small equaliser, used as the cover art. */
-    private fun coverBox(context: Context, sizeDp: Int): Pair<FrameLayout, EqualizerView> {
+    /** A rounded square that shows the cover, with a small equaliser as the fallback. */
+    private fun coverBox(context: Context, sizeDp: Int): Triple<FrameLayout, EqualizerView, ImageView> {
         val eq = EqualizerView(context).apply {
             layoutParams = FrameLayout.LayoutParams(dp(context, 20), dp(context, 16), Gravity.CENTER)
         }
+        val image = ImageView(context).apply {
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            visibility = View.GONE
+            layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+        }
         val box = FrameLayout(context).apply {
             background = roundedFill(context, 0x33FFFFFF, 10f)
+            clipToOutline = true
+            outlineProvider = ViewOutlineProvider.BACKGROUND
             layoutParams = LinearLayout.LayoutParams(dp(context, sizeDp), dp(context, sizeDp))
+            addView(image)
             addView(eq)
         }
-        return box to eq
+        return Triple(box, eq, image)
     }
 
     private fun buildIsland(context: Context, controller: PlaybackController, look: IslandPrefs.Look): LinearLayout {
@@ -297,7 +361,7 @@ object DynamicIslandOverlay {
         val pillColor = if (glass) 0xCC1E2128.toInt() else Color.BLACK
 
         // Compact row: cover on the left, equaliser bars on the right.
-        val (compactCover, compactEq) = coverBox(context, 34)
+        val (compactCover, compactEq, compactImage) = coverBox(context, 34)
         val compactBars = EqualizerView(context).apply {
             layoutParams = LinearLayout.LayoutParams(dp(context, 22), dp(context, 16)).apply {
                 leftMargin = dp(context, 8)
@@ -313,7 +377,7 @@ object DynamicIslandOverlay {
         }
 
         // Expanded card.
-        val (expandedCover, expandedEq) = coverBox(context, 44)
+        val (expandedCover, expandedEq, expandedImage) = coverBox(context, 44)
         val titleView = TextView(context).apply {
             setTextColor(Color.WHITE)
             textSize = 15f
@@ -443,6 +507,8 @@ object DynamicIslandOverlay {
         playButton = play
         expandedPart = expandedColumn
         equalizers = listOf(compactEq, compactBars, expandedEq)
+        coverEqualizers = listOf(compactEq, expandedEq)
+        coverViews = listOf(compactImage, expandedImage)
         return root
     }
 
