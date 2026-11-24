@@ -1,15 +1,18 @@
 package com.aetherwave.core.island
 
-import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.view.Choreographer
 import android.view.View
-import android.view.animation.LinearInterpolator
+import kotlin.math.PI
 import kotlin.math.sin
 
-/** Four bars that rise and fall while a song plays, and sit still when it is paused. */
+/**
+ * Four bars that rise and fall while a song plays, and sit still when it is paused. The motion runs
+ * on the frame clock, so it works even when animations are turned off in developer options.
+ */
 class EqualizerView(context: Context) : View(context) {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
@@ -17,25 +20,24 @@ class EqualizerView(context: Context) : View(context) {
     }
     private var phase = 0f
     private var playing = false
-    private var animator: ValueAnimator? = null
+    private var startNs = 0L
+
+    private val frame = Choreographer.FrameCallback { frameNs ->
+        if (!playing) return@FrameCallback
+        if (startNs == 0L) startNs = frameNs
+        phase = ((frameNs - startNs) / 1_000_000f) * (2f * PI.toFloat() / 900f)
+        invalidate()
+        Choreographer.getInstance().postFrameCallback(frame)
+    }
 
     fun setPlaying(isPlaying: Boolean) {
         if (isPlaying == playing) return
         playing = isPlaying
         if (isPlaying) {
-            val running = animator ?: ValueAnimator.ofFloat(0f, (2 * Math.PI).toFloat()).apply {
-                duration = 900L
-                repeatCount = ValueAnimator.INFINITE
-                interpolator = LinearInterpolator()
-                addUpdateListener {
-                    phase = it.animatedValue as Float
-                    invalidate()
-                }
-                animator = this
-            }
-            running.start()
+            startNs = 0L
+            Choreographer.getInstance().postFrameCallback(frame)
         } else {
-            animator?.cancel()
+            Choreographer.getInstance().removeFrameCallback(frame)
             phase = 0f
             invalidate()
         }
@@ -43,8 +45,8 @@ class EqualizerView(context: Context) : View(context) {
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        animator?.cancel()
-        animator = null
+        playing = false
+        Choreographer.getInstance().removeFrameCallback(frame)
     }
 
     override fun onDraw(canvas: Canvas) {

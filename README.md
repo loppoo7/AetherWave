@@ -206,3 +206,13 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 ## 2.7
 
 - **Build fixes.** The `height` modifier is imported in Settings, and the lyric list reads a nullable value safely.
+
+## 2.8
+
+- **Dynamic Island look.** Black pill like the Auralys preview. Compact shows the cover with an equaliser on the left and bars on the right. Tap to expand into a card with title, artist, the current lyric, a progress bar with times, and previous, play or pause, and next buttons.
+- **Style and corners.** Settings > Appearance > Dynamic Island > Customize has Classic or Glass styles, and a corner roundness slider. The preview matches the overlay.
+
+## 2.9
+
+- **Animations work with developer options off.** The island's motion runs on the display's frame clock, not on the system animation scale. Entry, expand and collapse, text changes, button bounce, and the equaliser all animate.
+- **Blur on press.** Pressing the island blurs the content behind it slightly. It needs Android 12 or newer. On older versions, the press has no blur.

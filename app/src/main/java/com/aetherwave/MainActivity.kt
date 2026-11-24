@@ -77,6 +77,11 @@ class MainActivity : ComponentActivity() {
                     onIslandPositionChanged = { x, y ->
                         com.aetherwave.core.island.IslandPrefs.write(this@MainActivity, x, y)
                     },
+                    islandStyle = com.aetherwave.core.island.IslandPrefs.readLook(this).style,
+                    islandCorner = com.aetherwave.core.island.IslandPrefs.readLook(this).corner,
+                    onIslandLookChanged = { style, corner ->
+                        com.aetherwave.core.island.IslandPrefs.writeLook(this@MainActivity, style, corner)
+                    },
                     onDynamicIslandChanged = { enabled ->
                         if (enabled && !Settings.canDrawOverlays(this@MainActivity)) {
                             // Send the user to the permission screen. The setting is saved once permission is granted.

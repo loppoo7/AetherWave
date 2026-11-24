@@ -62,6 +62,12 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.material3.TextButton
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Slider
+import com.aetherwave.core.island.IslandPrefs
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material.icons.rounded.SkipNext
 
 private enum class SettingsPage { HUB, APPEARANCE, SOUND, INTEGRATIONS, LANGUAGE, ABOUT, ISLAND }
 
@@ -93,6 +99,9 @@ fun SettingsScreen(
     islandX: Float,
     islandY: Float,
     onIslandPositionChanged: (Float, Float) -> Unit,
+    islandStyle: String,
+    islandCorner: Float,
+    onIslandLookChanged: (String, Float) -> Unit,
     onBack: () -> Unit,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.HUB) }
@@ -162,6 +171,9 @@ fun SettingsScreen(
                 islandX = islandX,
                 islandY = islandY,
                 onIslandPositionChanged = onIslandPositionChanged,
+                islandStyle = islandStyle,
+                islandCorner = islandCorner,
+                onIslandLookChanged = onIslandLookChanged,
             )
             SettingsPage.ABOUT -> AboutPage()
         }
@@ -387,27 +399,60 @@ private fun IslandPage(
     islandX: Float,
     islandY: Float,
     onIslandPositionChanged: (Float, Float) -> Unit,
+    islandStyle: String,
+    islandCorner: Float,
+    onIslandLookChanged: (String, Float) -> Unit,
 ) {
     var fx by remember(islandX) { mutableFloatStateOf(islandX) }
     var fy by remember(islandY) { mutableFloatStateOf(islandY) }
+    var style by remember(islandStyle) { mutableStateOf(islandStyle) }
+    var corner by remember(islandCorner) { mutableFloatStateOf(islandCorner) }
+    val shape = RoundedCornerShape(IslandPrefs.cornerDp(corner).dp)
+    val pillColor = if (style == IslandPrefs.STYLE_GLASS) Color(0xCC1E2128) else Color.Black
+
     Text(
         stringResource(R.string.settings_island_hint),
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
         fontSize = 12.sp,
     )
+    OptionChips(
+        options = listOf(
+            stringResource(R.string.island_style_classic) to IslandPrefs.STYLE_CLASSIC,
+            stringResource(R.string.island_style_glass) to IslandPrefs.STYLE_GLASS,
+        ),
+        selected = style,
+        onSelect = {
+            style = it
+            onIslandLookChanged(style, corner)
+        },
+    )
+    Text(
+        stringResource(R.string.island_corner),
+        color = MaterialTheme.colorScheme.onSurface,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
+    Slider(
+        value = corner,
+        onValueChange = { corner = it },
+        onValueChangeFinished = { onIslandLookChanged(style, corner) },
+        valueRange = 0f..1f,
+    )
+
     BoxWithConstraints(
         Modifier
             .fillMaxWidth()
-            .height(520.dp)
+            .height(440.dp)
             .clip(RoundedCornerShape(36.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)),
     ) {
         val widthPx = constraints.maxWidth.toFloat()
         val heightPx = constraints.maxHeight.toFloat()
-        Box(
+        Column(
             Modifier
                 .align(Alignment.TopCenter)
                 .offset { IntOffset((fx * widthPx / 2f).roundToInt(), (fy * heightPx).roundToInt()) }
+                .width(280.dp)
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDrag = { change, drag ->
@@ -419,16 +464,50 @@ private fun IslandPage(
                         onDragCancel = { onIslandPositionChanged(fx, fy) },
                     )
                 }
-                .clip(RoundedCornerShape(50))
-                .background(Color(0xE6101216))
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .clip(shape)
+                .background(pillColor)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Box(Modifier.size(width = 6.dp, height = 18.dp).clip(RoundedCornerShape(3.dp)).background(Color.White))
-                Column {
-                    Text("Song title", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    Text("Artist", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0x33FFFFFF)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                        listOf(8, 14, 10).forEach { h ->
+                            Box(Modifier.width(3.dp).height(h.dp).clip(RoundedCornerShape(2.dp)).background(Color.White))
+                        }
+                    }
                 }
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.island_preview_title), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.island_preview_artist), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                }
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    listOf(12, 18, 9, 15).forEach { h ->
+                        Box(Modifier.width(3.dp).height(h.dp).clip(RoundedCornerShape(2.dp)).background(Color.White))
+                    }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("0:42", color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp)
+                Box(Modifier.weight(1f).height(3.dp).clip(RoundedCornerShape(2.dp)).background(Color(0x33FFFFFF))) {
+                    Box(Modifier.fillMaxWidth(0.4f).height(3.dp).background(Color.White))
+                }
+                Text("-2:10", color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp)
+            }
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                Icon(Icons.Rounded.SkipPrevious, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
+                Icon(Icons.Rounded.Pause, contentDescription = null, tint = Color.White, modifier = Modifier.size(30.dp))
+                Icon(Icons.Rounded.SkipNext, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
             }
         }
     }
