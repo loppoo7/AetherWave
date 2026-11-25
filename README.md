@@ -255,3 +255,7 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 - **Pure black.** A solid black background for dark mode, for OLED screens.
 - **Settings > Appearance** is reorganised into THEME and DISPLAY sections, with clearer labels.
 - **Indonesian.** The locale is set as the default when the language changes, so formatting follows the chosen language too.
+
+## 3.5
+
+- **Build fix.** `luminance()` is imported in the theme, so the artwork colour scheme compiles.

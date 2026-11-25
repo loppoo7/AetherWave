@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.material3.ColorScheme
 import com.aetherwave.core.designsystem.components.ArtworkPalette
+import androidx.compose.ui.graphics.luminance
 
 private val AetherWaveDarkColors = darkColorScheme(
     primary = Color(0xFFE8E8EE),
