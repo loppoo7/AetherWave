@@ -64,6 +64,7 @@ object DynamicIslandOverlay {
     private var island: LinearLayout? = null
     private var params: WindowManager.LayoutParams? = null
     private var expandedPart: LinearLayout? = null
+    private var compactPart: LinearLayout? = null
     private var title: TextView? = null
     private var artist: TextView? = null
     private var lyricLine: TextView? = null
@@ -154,6 +155,7 @@ object DynamicIslandOverlay {
         manager = null
         params = null
         expandedPart = null
+        compactPart = null
         title = null
         artist = null
         lyricLine = null
@@ -266,15 +268,33 @@ object DynamicIslandOverlay {
     private fun setExpanded(open: Boolean) {
         expanded = open
         val part = expandedPart ?: return
+        val compact = compactPart
         expandTween?.cancel()
         if (open) {
+            // The compact pill fades and shrinks away, and the card grows in its place.
             part.visibility = View.VISIBLE
+            compact?.let { c ->
+                FrameTween(COLLAPSE_MS, onEnd = { c.visibility = View.GONE }) { t ->
+                    c.alpha = 1f - t
+                    c.scaleX = 1f - 0.12f * t
+                    c.scaleY = 1f - 0.12f * t
+                }.start()
+            }
             expandTween = FrameTween(EXPAND_MS, easing = ::easeOutBack) { t ->
-                part.alpha = t
+                part.alpha = t.coerceIn(0f, 1f)
                 part.scaleY = 0.8f + 0.2f * t
                 part.translationY = -dpF(part.context, 6f) * (1f - t)
             }.also { it.start() }
         } else {
+            // The card shrinks away, and the compact pill comes back.
+            compact?.let { c ->
+                c.visibility = View.VISIBLE
+                FrameTween(EXPAND_MS, easing = ::easeOutBack) { t ->
+                    c.alpha = t.coerceIn(0f, 1f)
+                    c.scaleX = 0.88f + 0.12f * t
+                    c.scaleY = 0.88f + 0.12f * t
+                }.start()
+            }
             expandTween = FrameTween(COLLAPSE_MS, onEnd = { part.visibility = View.GONE }) { t ->
                 part.alpha = 1f - t
                 part.scaleY = 1f - 0.2f * t
@@ -494,7 +514,7 @@ object DynamicIslandOverlay {
         val expandedColumn = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             pivotY = 0f
-            minimumWidth = dp(context, 300)
+            minimumWidth = dp(context, 280)
             setPadding(dp(context, 14), dp(context, 4), dp(context, 14), dp(context, 12))
             visibility = View.GONE
             addView(header)
@@ -536,6 +556,7 @@ object DynamicIslandOverlay {
         progressBar = bar
         playButton = play
         expandedPart = expandedColumn
+        compactPart = compactRow
         equalizers = listOf(compactEq, compactBars, expandedEq)
         coverEqualizers = listOf(compactEq, expandedEq)
         coverViews = listOf(compactImage, expandedImage)

@@ -259,3 +259,8 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 ## 3.5
 
 - **Build fix.** `luminance()` is imported in the theme, so the artwork colour scheme compiles.
+
+## 3.6
+
+- **Island.** Tapping the island fades the compact pill away and opens the card. Collapsing brings the compact pill back. The compact pill is 190 dp wide and the card is 280 dp.
+- **Smooth theme colours.** When the song changes, the cover-based colours glide to the new ones over 0.7 seconds.

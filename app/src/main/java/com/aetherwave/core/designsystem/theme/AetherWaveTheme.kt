@@ -13,6 +13,8 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.material3.ColorScheme
 import com.aetherwave.core.designsystem.components.ArtworkPalette
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 
 private val AetherWaveDarkColors = darkColorScheme(
     primary = Color(0xFFE8E8EE),
@@ -70,8 +72,19 @@ fun AetherWaveTheme(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
+    // Cover colours glide to the next song's colours instead of jumping.
+    val seedPrimary by animateColorAsState(
+        targetValue = artworkSeed?.primary ?: Color(0xFFE8E8EE),
+        animationSpec = tween(durationMillis = 700),
+        label = "seedPrimary",
+    )
+    val seedSecondary by animateColorAsState(
+        targetValue = artworkSeed?.secondary ?: Color(0xFFA9AAB6),
+        animationSpec = tween(durationMillis = 700),
+        label = "seedSecondary",
+    )
     val scheme = if (useArtwork && artworkSeed != null) {
-        schemeFromArtwork(artworkSeed, darkTheme, pureBlack)
+        schemeFromArtwork(ArtworkPalette(primary = seedPrimary, secondary = seedSecondary, highlight = seedPrimary), darkTheme, pureBlack)
     } else if (materialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         // Material You: colours come from the wallpaper. Needs Android 12 or newer.
         // Surfaces are layered: the page is the lowest tone, cards sit one step above it, and
