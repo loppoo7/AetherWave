@@ -237,3 +237,21 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Smaller island.** The compact pill is 190 × 40 dp, instead of a wide bar. Expanded, it is 300 dp wide.
 - **Spinning cover.** The cover is a circle that turns once every 6 seconds while the song plays, and stops when paused. The motion runs on the frame clock.
+
+## 3.3
+
+- **Material You layers.** With Material You on, the page uses the lowest surface tone, cards sit one step above, and raised elements use the highest tone. This follows the layered look in the preview.
+- The preview's icon and bottom-bar changes were already in place from earlier versions.
+- Not yet done: the hero card's gradient and an accent taken from the album cover.
+
+## 3.3 (update)
+
+- **Now playing hero on Home.** A card at the top of Home shows the song that is playing, with its cover, title, artist, progress, and previous, play or pause, and next buttons. It uses a gradient from the theme's container colours.
+
+## 3.4
+
+- **Theme from artwork (on by default).** The app's colours come from the cover of the song that is playing. It works on every Android version. The old Material You switch is replaced by this option.
+- **Blurred cover behind Now Playing.** The cover sits behind the controls. Blur applies on Android 12 and newer; older versions show it softened.
+- **Pure black.** A solid black background for dark mode, for OLED screens.
+- **Settings > Appearance** is reorganised into THEME and DISPLAY sections, with clearer labels.
+- **Indonesian.** The locale is set as the default when the language changes, so formatting follows the chosen language too.

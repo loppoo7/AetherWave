@@ -91,6 +91,11 @@ import com.aetherwave.ui.viewmodel.MainPlayerUiState
 import dev.chrisbanes.haze.HazeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.graphicsLayer
+import android.os.Build
 
 @Composable
 fun NowPlayingScreen(
@@ -155,6 +160,18 @@ fun NowPlayingScreen(
 
     Box(Modifier.fillMaxSize()) {
         DynamicMeshBackground(palette, Modifier.fillMaxSize().liquidGlassSource(hazeState))
+        // The cover behind the controls. Blur needs Android 12 or newer; older versions show it softened.
+        artworkBitmap?.let { bitmap ->
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { alpha = 0.4f }
+                    .then(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Modifier.blur(48.dp) else Modifier),
+            )
+        }
         Box(Modifier.fillMaxSize().background(Color(0x99080A14)))
 
         Column(Modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(15.dp)) {

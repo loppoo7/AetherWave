@@ -84,4 +84,10 @@
     <string name="settings_island_hint">The position is saved when you let go. Tap the island in the app to open lyrics and controls.</string>
     <string name="island_style_classic">Classic</string>\n    <string name="island_style_glass">Glass</string>\n    <string name="island_corner">Corner roundness</string>\n    <string name="island_preview_title">Song title</string>\n    <string name="island_preview_artist">Artist</string>\n    <string name="settings_material_you">Material You</string>
     <string name="settings_material_you_desc">Colors follow your wallpaper. Needs Android 12 or newer.</string>
+    <string name="settings_section_theme">THEME</string>
+    <string name="settings_section_display">DISPLAY</string>
+    <string name="settings_artwork_theme">Theme from artwork</string>
+    <string name="settings_artwork_theme_desc">Colors follow the song that is playing, and the background shows its cover.</string>
+    <string name="settings_pure_black">Pure black</string>
+    <string name="settings_pure_black_desc">A solid black background, best on OLED screens.</string>
 </resources>

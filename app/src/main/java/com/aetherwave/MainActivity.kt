@@ -23,6 +23,7 @@ import android.provider.Settings
 import com.aetherwave.core.island.DynamicIslandOverlay
 import com.aetherwave.playback.PlaybackController
 import javax.inject.Inject
+import androidx.compose.runtime.collectAsState
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -53,6 +54,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val systemDark = isSystemInDarkTheme()
             var crashReport by remember { mutableStateOf(pendingCrash) }
+            val artworkSeed = com.aetherwave.core.theme.ArtworkThemeStore.seed.collectAsState().value
             var themeMode by remember {
                 mutableStateOf(preferences.getString("theme_mode", "system") ?: "system")
             }
@@ -68,12 +70,25 @@ class MainActivity : ComponentActivity() {
                 darkTheme = darkTheme,
                 accent = AccentPalette.fromKey(preferences.getString("accent", "default")),
                 materialYou = true,
+                artworkSeed = artworkSeed,
+                useArtwork = preferences.getBoolean("artwork_theme", true),
+                pureBlack = preferences.getBoolean("pure_black", false),
             ) {
                 AetherWaveApp(
                     darkTheme = darkTheme,
                     language = preferences.getString(AppLocale.KEY, AppLocale.SYSTEM) ?: AppLocale.SYSTEM,
                     materialYou = true,
                     onMaterialYouChanged = { _ -> },
+                    artworkTheme = preferences.getBoolean("artwork_theme", true),
+                    onArtworkThemeChanged = { on ->
+                        preferences.edit().putBoolean("artwork_theme", on).apply()
+                        recreate()
+                    },
+                    pureBlack = preferences.getBoolean("pure_black", false),
+                    onPureBlackChanged = { on ->
+                        preferences.edit().putBoolean("pure_black", on).apply()
+                        recreate()
+                    },
                     dynamicIsland = preferences.getBoolean("dynamic_island", false),
                     islandX = com.aetherwave.core.island.IslandPrefs.read(this).first,
                     islandY = com.aetherwave.core.island.IslandPrefs.read(this).second,

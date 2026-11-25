@@ -104,6 +104,10 @@ fun SettingsScreen(
     onIslandLookChanged: (String, Float) -> Unit,
     materialYou: Boolean,
     onMaterialYouChanged: (Boolean) -> Unit,
+    artworkTheme: Boolean,
+    onArtworkThemeChanged: (Boolean) -> Unit,
+    pureBlack: Boolean,
+    onPureBlackChanged: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.HUB) }
@@ -144,11 +148,13 @@ fun SettingsScreen(
                 onThemeModeChanged = onThemeModeChanged,
                 accent = accent,
                 onAccentChanged = onAccentChanged,
+                artworkTheme = artworkTheme,
+                onArtworkThemeChanged = onArtworkThemeChanged,
+                pureBlack = pureBlack,
+                onPureBlackChanged = onPureBlackChanged,
                 dynamicIsland = dynamicIsland,
                 onDynamicIslandChanged = onDynamicIslandChanged,
                 onOpenIsland = { page = SettingsPage.ISLAND },
-                materialYou = materialYou,
-                onMaterialYouChanged = onMaterialYouChanged,
                 liquidGlassEnabled = liquidGlassEnabled,
                 onLiquidGlassChanged = onLiquidGlassChanged,
             )
@@ -206,68 +212,92 @@ private fun HubPage(onOpen: (SettingsPage) -> Unit) {
 }
 
 @Composable
+private fun SectionTitle(text: String) {
+    Text(
+        text,
+        color = MaterialTheme.colorScheme.primary,
+        fontSize = 11.sp,
+        letterSpacing = 2.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 4.dp),
+    )
+}
+
+@Composable
 private fun AppearancePage(
     themeMode: String,
     onThemeModeChanged: (String) -> Unit,
     accent: String,
     onAccentChanged: (String) -> Unit,
+    artworkTheme: Boolean,
+    onArtworkThemeChanged: (Boolean) -> Unit,
+    pureBlack: Boolean,
+    onPureBlackChanged: (Boolean) -> Unit,
     dynamicIsland: Boolean,
     onDynamicIslandChanged: (Boolean) -> Unit,
     onOpenIsland: () -> Unit,
-    materialYou: Boolean,
-    onMaterialYouChanged: (Boolean) -> Unit,
     liquidGlassEnabled: Boolean,
     onLiquidGlassChanged: (Boolean) -> Unit,
 ) {
+    SectionTitle(stringResource(R.string.settings_section_theme))
     SettingsCard {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.settings_accent), color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Text(stringResource(R.string.settings_accent_desc), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f), fontSize = 12.sp)
+        SettingRow(
+            title = stringResource(R.string.settings_artwork_theme),
+            subtitle = stringResource(R.string.settings_artwork_theme_desc),
+            trailing = { Switch(checked = artworkTheme, onCheckedChange = onArtworkThemeChanged) },
+        )
+        SettingRow(
+            title = stringResource(R.string.settings_pure_black),
+            subtitle = stringResource(R.string.settings_pure_black_desc),
+            trailing = { Switch(checked = pureBlack, onCheckedChange = onPureBlackChanged) },
+        )
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(stringResource(R.string.settings_theme), color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             OptionChips(
                 options = listOf(
-                    "default" to stringResource(R.string.accent_default),
-                    "ocean" to stringResource(R.string.accent_ocean),
-                    "mint" to stringResource(R.string.accent_mint),
-                    "amber" to stringResource(R.string.accent_amber),
-                    "rose" to stringResource(R.string.accent_rose),
-                ),
-                selected = accent,
-                onSelect = onAccentChanged,
-            )
-        }
-    }
-    SettingsCard {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(R.string.settings_theme), color = MaterialTheme.colorScheme.onSurface, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Text(stringResource(R.string.settings_theme_desc), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f), fontSize = 12.sp)
-            OptionChips(
-                options = listOf(
-                    "system" to stringResource(R.string.theme_system),
-                    "light" to stringResource(R.string.theme_light),
-                    "dark" to stringResource(R.string.theme_dark),
+                    stringResource(R.string.theme_system) to "system",
+                    stringResource(R.string.theme_light) to "light",
+                    stringResource(R.string.theme_dark) to "dark",
                 ),
                 selected = themeMode,
                 onSelect = onThemeModeChanged,
             )
         }
     }
+    if (!artworkTheme) {
+        SettingsCard {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.settings_accent), color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.settings_accent_desc), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f), fontSize = 12.sp)
+                OptionChips(
+                    options = listOf(
+                        stringResource(R.string.accent_default) to "default",
+                        stringResource(R.string.accent_ocean) to "ocean",
+                        stringResource(R.string.accent_mint) to "mint",
+                        stringResource(R.string.accent_amber) to "amber",
+                        stringResource(R.string.accent_rose) to "rose",
+                    ),
+                    selected = accent,
+                    onSelect = onAccentChanged,
+                )
+            }
+        }
+    }
+    SectionTitle(stringResource(R.string.settings_section_display))
     SettingsCard {
         SettingRow(
             title = stringResource(R.string.settings_liquid_glass),
             subtitle = stringResource(R.string.settings_liquid_glass_desc),
             trailing = { Switch(checked = liquidGlassEnabled, onCheckedChange = onLiquidGlassChanged) },
         )
-    }
-
-    SettingsCard {
         SettingRow(
-            title = stringResource(R.string.settings_dynamic_island),
-            subtitle = stringResource(R.string.settings_dynamic_island_desc),
+            title = stringResource(R.string.settings_island_title),
+            subtitle = stringResource(R.string.settings_island_preview_desc),
             trailing = { Switch(checked = dynamicIsland, onCheckedChange = onDynamicIslandChanged) },
         )
         SettingRow(
             title = stringResource(R.string.settings_island_customize),
-            subtitle = stringResource(R.string.settings_island_preview_desc),
+            subtitle = stringResource(R.string.settings_island_hint),
             trailing = { TextButton(onClick = onOpenIsland) { Text(stringResource(R.string.settings_island_customize)) } },
         )
     }

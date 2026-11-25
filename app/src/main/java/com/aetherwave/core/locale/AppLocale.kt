@@ -21,6 +21,7 @@ object AppLocale {
         if (tag == SYSTEM) return context
         val locale = Locale.forLanguageTag(tag)
         val config = Configuration(context.resources.configuration)
+        Locale.setDefault(locale)
         config.setLocales(LocaleList(locale))
         return context.createConfigurationContext(config)
     }

@@ -54,6 +54,7 @@ class MainPlayerViewModel @Inject constructor(
 
     init {
         playbackController.connect()
+        com.aetherwave.core.theme.ArtworkThemeStore.follow(viewModelScope, playbackController.state)
         viewModelScope.launch {
             playbackController.state.collect { playback ->
                 mutableState.update {

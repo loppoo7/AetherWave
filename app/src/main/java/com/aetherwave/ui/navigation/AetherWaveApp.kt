@@ -88,6 +88,10 @@ fun AetherWaveApp(
     onIslandLookChanged: (String, Float) -> Unit,
     materialYou: Boolean,
     onMaterialYouChanged: (Boolean) -> Unit,
+    artworkTheme: Boolean,
+    onArtworkThemeChanged: (Boolean) -> Unit,
+    pureBlack: Boolean,
+    onPureBlackChanged: (Boolean) -> Unit,
 ) {
     val navController = rememberNavController()
     val hazeState = rememberLiquidGlassState()
@@ -159,6 +163,10 @@ fun AetherWaveApp(
                     playlists = libraryState.playlists,
                     onAddToPlaylist = libraryViewModel::addTrack,
                     onOpenLibrary = { tab -> navController.navigate("library/$tab") },
+                    playback = playerState.playback,
+                    onTogglePlay = playerViewModel::togglePlayPause,
+                    onPrevious = playerViewModel::previous,
+                    onNext = playerViewModel::next,
                     onOpenSettings = { navController.navigate("settings") },
                     onOpenSearch = { navController.navigate("search") { launchSingleTop = true } },
                 )
@@ -193,6 +201,10 @@ fun AetherWaveApp(
                     onIslandLookChanged = onIslandLookChanged,
                     materialYou = materialYou,
                     onMaterialYouChanged = onMaterialYouChanged,
+                    artworkTheme = artworkTheme,
+                    onArtworkThemeChanged = onArtworkThemeChanged,
+                    pureBlack = pureBlack,
+                    onPureBlackChanged = onPureBlackChanged,
                     onSetSponsorBlock = playerViewModel::setSponsorBlockEnabled,
                     onSetScrobble = playerViewModel::setScrobbleEnabled,
                     onSetListenBrainzToken = playerViewModel::setListenBrainzToken,
