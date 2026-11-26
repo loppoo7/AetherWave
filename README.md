@@ -268,3 +268,14 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 ## 3.7
 
 - **Build fix.** `getValue` is imported so the animated cover colours can be used as delegated properties.
+
+## 3.7.1
+
+- **Hero card removed from Home.**
+- **Island width.** Settings > Appearance > Dynamic Island > Customize has a width slider for the compact pill, from 150 to 260 dp (default 190).
+- **Performance.** The unused hero card code is removed. Island animations stay stopped while the island is hidden.
+
+## 3.7.2
+
+- **Island comes back.** If the system takes the island away (for example while a game or another app is in front), it is built again on the next playback update. Opening a game or app no longer makes it disappear.
+- **Island width.** The compact pill and the expanded card use fixed widths, so they no longer stretch to the full screen.

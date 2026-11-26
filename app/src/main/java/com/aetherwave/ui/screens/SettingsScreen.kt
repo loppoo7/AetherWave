@@ -68,6 +68,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.ui.platform.LocalContext
 
 private enum class SettingsPage { HUB, APPEARANCE, SOUND, INTEGRATIONS, LANGUAGE, ABOUT, ISLAND }
 
@@ -474,6 +475,20 @@ private fun IslandPage(
         onValueChange = { corner = it },
         onValueChangeFinished = { onIslandLookChanged(style, corner) },
         valueRange = 0f..1f,
+    )
+    val islandContext = LocalContext.current
+    var pillWidth by remember { mutableFloatStateOf(IslandPrefs.readWidth(islandContext).toFloat()) }
+    Text(
+        "Panjang pill: ${pillWidth.roundToInt()} dp",
+        color = MaterialTheme.colorScheme.onSurface,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
+    Slider(
+        value = pillWidth,
+        onValueChange = { pillWidth = it },
+        onValueChangeFinished = { IslandPrefs.writeWidth(islandContext, pillWidth.roundToInt()) },
+        valueRange = 150f..260f,
     )
 
     BoxWithConstraints(

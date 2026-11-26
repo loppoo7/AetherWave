@@ -93,6 +93,8 @@ object DynamicIslandOverlay {
     }
     private var expanded = false
     private var stateJob: Job? = null
+    private var savedContext: Context? = null
+    private var savedController: PlaybackController? = null
     private var expandTween: FrameTween? = null
     private var blurTween: FrameTween? = null
     private var blurPx = 0
@@ -100,7 +102,10 @@ object DynamicIslandOverlay {
     /** Adds the island if the overlay permission is granted. */
     fun show(context: Context, controller: PlaybackController) {
         val app = context.applicationContext
-        if (island != null || !Settings.canDrawOverlays(app)) return
+        if (island?.isAttachedToWindow == true || !Settings.canDrawOverlays(app)) return
+        teardown()
+        savedContext = app
+        savedController = controller
         val wm = app.getSystemService(WindowManager::class.java) ?: return
         val look = IslandPrefs.readLook(app)
         val view = buildIsland(app, controller, look)
@@ -145,12 +150,22 @@ object DynamicIslandOverlay {
 
     /** Removes the island and stops following playback. Safe to call when it is not shown. */
     fun hide() {
+        val view = island
+        val wm = manager
+        teardown()
+        savedContext = null
+        savedController = null
+        if (view != null && wm != null) runCatching { wm.removeView(view) }
+    }
+
+    /** Stops every animation and forgets the views. It does not touch the window. */
+    private fun teardown() {
         stateJob?.cancel()
         stateJob = null
         expandTween?.cancel()
         blurTween?.cancel()
-        val view = island
-        val wm = manager
+        artworkJob?.cancel()
+        setSpinning(false)
         island = null
         manager = null
         params = null
@@ -166,18 +181,24 @@ object DynamicIslandOverlay {
         equalizers = emptyList()
         coverEqualizers = emptyList()
         coverViews = emptyList()
-        setSpinning(false)
         coverBoxes = emptyList()
         artworkUrl = null
-        artworkJob?.cancel()
         expanded = false
-        if (view != null && wm != null) runCatching { wm.removeView(view) }
     }
 
     private fun render(playback: PlaybackState, lines: List<LyricLine>) {
         val track = playback.currentMusicTrack
         if (track == null) {
             hide()
+            return
+        }
+        if (island?.isAttachedToWindow == false) {
+            // The system took the island away, for example while a game or another app was in front.
+            // Build it again instead of leaving it missing.
+            val context = savedContext
+            val controller = savedController
+            teardown()
+            if (context != null && controller != null) show(context, controller)
             return
         }
         title?.text = track.title
@@ -421,7 +442,7 @@ object DynamicIslandOverlay {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(context, 6), dp(context, 5), dp(context, 10), dp(context, 5))
             addView(compactCover)
-            addView(View(context), LinearLayout.LayoutParams(0, 1, 1f))
+            addView(View(context), LinearLayout.LayoutParams(dp(context, (IslandPrefs.readWidth(context) - 76).coerceAtLeast(0)), 1))
             addView(compactBars)
         }
 
@@ -450,7 +471,7 @@ object DynamicIslandOverlay {
                     addView(titleView)
                     addView(artistView)
                 },
-                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                LinearLayout.LayoutParams(dp(context, 182), LinearLayout.LayoutParams.WRAP_CONTENT).apply {
                     leftMargin = dp(context, 12)
                 },
             )
@@ -488,7 +509,7 @@ object DynamicIslandOverlay {
             addView(elapsed)
             addView(
                 track,
-                LinearLayout.LayoutParams(0, dp(context, 3), 1f).apply {
+                LinearLayout.LayoutParams(dp(context, 170), dp(context, 3)).apply {
                     leftMargin = dp(context, 8)
                     rightMargin = dp(context, 8)
                 },
@@ -520,24 +541,24 @@ object DynamicIslandOverlay {
             addView(header)
             addView(
                 lyricView,
-                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                LinearLayout.LayoutParams(dp(context, 252), LinearLayout.LayoutParams.WRAP_CONTENT)
                     .apply { topMargin = dp(context, 8) },
             )
             addView(
                 progressRow,
-                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                LinearLayout.LayoutParams(dp(context, 252), LinearLayout.LayoutParams.WRAP_CONTENT)
                     .apply { topMargin = dp(context, 12) },
             )
             addView(
                 controls,
-                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                LinearLayout.LayoutParams(dp(context, 252), LinearLayout.LayoutParams.WRAP_CONTENT)
                     .apply { topMargin = dp(context, 4) },
             )
         }
 
         val root = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            minimumWidth = dp(context, 190)
+            minimumWidth = dp(context, IslandPrefs.readWidth(context))
             background = GradientDrawable().apply {
                 shape = GradientDrawable.RECTANGLE
                 cornerRadius = dpF(context, IslandPrefs.cornerDp(look.corner)).toFloat()

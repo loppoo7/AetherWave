@@ -85,9 +85,6 @@ fun HomeScreen(
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 12.dp, bottom = 22.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        item(key = "now-playing-hero") {
-            NowPlayingHero(playback, onTogglePlay, onPrevious, onNext)
-        }
         item {
             Row(
                 modifier = Modifier.fillMaxWidth()
@@ -297,84 +294,3 @@ private fun EmptyHint(text: String, color: androidx.compose.ui.graphics.Color) {
 }
 
 
-/**
- * A card for the song that is playing: cover, title, artist, progress, and transport buttons.
- * The gradient uses the theme's container colours, so it follows the wallpaper with Material You.
- */
-@Composable
-private fun NowPlayingHero(
-    playback: PlaybackState,
-    onTogglePlay: () -> Unit,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-) {
-    val track = playback.currentMusicTrack ?: return
-    val scheme = MaterialTheme.colorScheme
-    val progress = if (playback.duration > 0L) {
-        (playback.position.toFloat() / playback.duration).coerceIn(0f, 1f)
-    } else {
-        0f
-    }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(26.dp))
-            .background(Brush.linearGradient(listOf(scheme.primaryContainer, scheme.surfaceContainerHigh)))
-            .padding(16.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            AsyncImage(
-                model = track.artworkUri,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)),
-            )
-            Column(Modifier.weight(1f)) {
-                Text(
-                    track.title,
-                    color = scheme.onPrimaryContainer,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    track.artist,
-                    color = scheme.onPrimaryContainer.copy(alpha = 0.75f),
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(scheme.onPrimaryContainer.copy(alpha = 0.2f)),
-        ) {
-            Box(Modifier.fillMaxWidth(progress).height(4.dp).background(scheme.onPrimaryContainer))
-        }
-        Row(
-            Modifier.fillMaxWidth().padding(top = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AwGlyph("|◀", scheme.onPrimaryContainer, 26.dp, 20.sp, Modifier.clickable(onClick = onPrevious))
-            Box(
-                Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(scheme.primary)
-                    .clickable(onClick = onTogglePlay),
-                contentAlignment = Alignment.Center,
-            ) {
-                AwGlyph(if (playback.isPlaying) "Ⅱ" else "▶", scheme.onPrimary, 28.dp, 22.sp)
-            }
-            AwGlyph("▶|", scheme.onPrimaryContainer, 26.dp, 20.sp, Modifier.clickable(onClick = onNext))
-        }
-    }
-}

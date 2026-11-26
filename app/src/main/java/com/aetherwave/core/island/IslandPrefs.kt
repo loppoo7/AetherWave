@@ -41,6 +41,16 @@ object IslandPrefs {
             .apply()
     }
 
+    /** Width of the compact pill in dp, from 150 to 260. */
+    fun readWidth(context: Context): Int =
+        context.getSharedPreferences(NAME, Context.MODE_PRIVATE).getInt("width", 190).coerceIn(150, 260)
+
+    fun writeWidth(context: Context, widthDp: Int) {
+        context.getSharedPreferences(NAME, Context.MODE_PRIVATE).edit()
+            .putInt("width", widthDp.coerceIn(150, 260))
+            .apply()
+    }
+
     /** Corner radius in dp: 12 for tight corners up to 36 for the roundest. */
     fun cornerDp(corner: Float): Float = 12f + 24f * corner.coerceIn(0f, 1f)
 }
