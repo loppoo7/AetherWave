@@ -15,6 +15,7 @@ import com.aetherwave.core.designsystem.components.ArtworkPalette
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
 
 private val AetherWaveDarkColors = darkColorScheme(
     primary = Color(0xFFE8E8EE),

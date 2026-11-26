@@ -264,3 +264,7 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Island.** Tapping the island fades the compact pill away and opens the card. Collapsing brings the compact pill back. The compact pill is 190 dp wide and the card is 280 dp.
 - **Smooth theme colours.** When the song changes, the cover-based colours glide to the new ones over 0.7 seconds.
+
+## 3.7
+
+- **Build fix.** `getValue` is imported so the animated cover colours can be used as delegated properties.
