@@ -119,4 +119,5 @@
     <string name="np_normalize">Normalisasi volume</string>
     <string name="np_sound_style">Gaya suara</string>
     <string name="np_loudness">Target loudness</string>
+    <string name="crash_copy_hint">Salin laporan ini dan kirim ke pengembang.</string>
 </resources>

@@ -298,3 +298,7 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Now Playing redesign.** The title and artist sit left-aligned, with the like and share buttons beside them. The bottom row has Download, Lyrics, and Queue. The play button is larger. The lyric share now lives in a helper that both places use.
 - The lyrics view, the queue, the options sheet, and playback are unchanged.
+
+## 3.8.2
+
+- **Build fix.** The crash dialog reads its strings in composable scope, not inside the Copy click handler. Its hint line is now translated as well.

@@ -25,13 +25,16 @@ import com.aetherwave.R
 @Composable
 fun CrashReportDialog(report: String, onDismiss: () -> Unit) {
     val context = LocalContext.current
+    // Read string resources here, in composable scope, not inside the click handler.
+    val reportTitle = stringResource(R.string.crash_report_title)
+    val copyHint = stringResource(R.string.crash_copy_hint)
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.crash_title)) },
         text = {
             Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
                 Text(
-                    "Copy this report and send it to the developer.",
+                    copyHint,
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Spacer(Modifier.height(10.dp))
@@ -41,7 +44,7 @@ fun CrashReportDialog(report: String, onDismiss: () -> Unit) {
         confirmButton = {
             TextButton(onClick = {
                 val clipboard = context.getSystemService(ClipboardManager::class.java)
-                clipboard?.setPrimaryClip(ClipData.newPlainText(stringResource(R.string.crash_report_title), report))
+                clipboard?.setPrimaryClip(ClipData.newPlainText(reportTitle, report))
             }) { Text(stringResource(R.string.action_copy)) }
         },
         dismissButton = {
