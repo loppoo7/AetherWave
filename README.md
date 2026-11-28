@@ -279,3 +279,22 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 
 - **Island comes back.** If the system takes the island away (for example while a game or another app is in front), it is built again on the next playback update. Opening a game or app no longer makes it disappear.
 - **Island width.** The compact pill and the expanded card use fixed widths, so they no longer stretch to the full screen.
+
+## 3.7.3
+
+- **No more restarts when settings change.** Changing the island, the artwork theme, pure black, or the accent colour no longer restarts the activity. Spamming these switches no longer makes the app stop responding. Changing the language still restarts once, and only when the language really changes.
+- **Island detection.** The island is rebuilt only after the system actually removes it, not on the first layout pass. This stops a rebuild loop that could cause lag.
+- **Island never crashes on add.** If the system refuses the overlay window, the island is skipped instead of closing the app.
+- **Memory.** The track lookup table, the cover loudness cache, the sponsor segment cache, and the radio seed list are all capped, so they cannot grow without limit.
+
+## 3.8
+
+- **Explore icon** is now a compass, not a star.
+- **Indonesian and English.** About 40 labels that were written in English in the code (crash, playlists, Explore, Library, Now Playing options, and more) now come from string resources, so they follow the language setting. The island's Previous and Next buttons follow it too.
+- **Dynamic Island turns on by itself.** After you grant "Display over other apps", the island is switched on as soon as you return to the app.
+- The Now Playing redesign and a full theme pass across all screens are not in this version yet.
+
+## 3.8.1
+
+- **Now Playing redesign.** The title and artist sit left-aligned, with the like and share buttons beside them. The bottom row has Download, Lyrics, and Queue. The play button is larger. The lyric share now lives in a helper that both places use.
+- The lyrics view, the queue, the options sheet, and playback are unchanged.

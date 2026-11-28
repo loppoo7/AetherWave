@@ -1,33 +1,46 @@
 package com.aetherwave
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.aetherwave.core.crash.CrashReportDialog
 import com.aetherwave.core.crash.CrashReporter
-import com.aetherwave.core.designsystem.theme.AetherWaveTheme
 import com.aetherwave.core.designsystem.theme.AccentPalette
+import com.aetherwave.core.designsystem.theme.AetherWaveTheme
+import com.aetherwave.core.island.DynamicIslandOverlay
+import com.aetherwave.core.island.IslandPrefs
 import com.aetherwave.core.locale.AppLocale
-import android.content.Context
+import com.aetherwave.core.theme.ArtworkThemeStore
+import com.aetherwave.playback.PlaybackController
 import com.aetherwave.ui.navigation.AetherWaveApp
 import dagger.hilt.android.AndroidEntryPoint
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
-import com.aetherwave.core.island.DynamicIslandOverlay
-import com.aetherwave.playback.PlaybackController
 import javax.inject.Inject
-import androidx.compose.runtime.collectAsState
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var playbackController: PlaybackController
+
+    /** True while the overlay permission screen is open, so repeated taps do not open it again. */
+    private var overlayPermissionOpen = false
+
+    /** True when the island was turned on but the permission was still missing. */
+    private var pendingIslandPermission = false
+
+    /** The island switch. It is state, so the switch updates the moment the setting changes. */
+    private val dynamicIslandState = mutableStateOf(false)
+
+    private val preferences by lazy { getSharedPreferences(PREFS, MODE_PRIVATE) }
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLocale.wrap(newBase))
@@ -40,86 +53,99 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        val enabled = getSharedPreferences("aetherwave_preferences", MODE_PRIVATE).getBoolean("dynamic_island", false)
+        val enabled = preferences.getBoolean(KEY_DYNAMIC_ISLAND, false)
         if (enabled && Settings.canDrawOverlays(this)) {
             DynamicIslandOverlay.show(this, playbackController)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        overlayPermissionOpen = false
+        // The user came back from the permission screen. If they granted it, turn the island on now.
+        if (pendingIslandPermission && Settings.canDrawOverlays(this)) {
+            pendingIslandPermission = false
+            preferences.edit().putBoolean(KEY_DYNAMIC_ISLAND, true).apply()
+            dynamicIslandState.value = true
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val preferences = getSharedPreferences("aetherwave_preferences", MODE_PRIVATE)
+        dynamicIslandState.value = preferences.getBoolean(KEY_DYNAMIC_ISLAND, false)
         val pendingCrash = CrashReporter.read(this)
         setContent {
             val systemDark = isSystemInDarkTheme()
+            val artworkSeed = ArtworkThemeStore.seed.collectAsState().value
+
+            // Settings are kept as state, so changing them does not recreate the activity.
             var crashReport by remember { mutableStateOf(pendingCrash) }
-            val artworkSeed = com.aetherwave.core.theme.ArtworkThemeStore.seed.collectAsState().value
-            var themeMode by remember {
-                mutableStateOf(preferences.getString("theme_mode", "system") ?: "system")
-            }
-            var liquidGlassEnabled by remember {
-                mutableStateOf(preferences.getBoolean("liquid_glass_enabled", false))
-            }
+            var themeMode by remember { mutableStateOf(preferences.getString("theme_mode", "system") ?: "system") }
+            var liquidGlassEnabled by remember { mutableStateOf(preferences.getBoolean(KEY_LIQUID_GLASS, false)) }
+            var artworkTheme by remember { mutableStateOf(preferences.getBoolean(KEY_ARTWORK_THEME, true)) }
+            var pureBlack by remember { mutableStateOf(preferences.getBoolean(KEY_PURE_BLACK, false)) }
+            val dynamicIsland = dynamicIslandState.value
+            var accent by remember { mutableStateOf(preferences.getString("accent", "default") ?: "default") }
+            var language by remember { mutableStateOf(preferences.getString(AppLocale.KEY, AppLocale.SYSTEM) ?: AppLocale.SYSTEM) }
+            var islandPosition by remember { mutableStateOf(IslandPrefs.read(this)) }
+            var islandLook by remember { mutableStateOf(IslandPrefs.readLook(this)) }
+
             val darkTheme = when (themeMode) {
                 "dark" -> true
                 "light" -> false
                 else -> systemDark
             }
+
             AetherWaveTheme(
                 darkTheme = darkTheme,
-                accent = AccentPalette.fromKey(preferences.getString("accent", "default")),
+                accent = AccentPalette.fromKey(accent),
                 materialYou = true,
                 artworkSeed = artworkSeed,
-                useArtwork = preferences.getBoolean("artwork_theme", true),
-                pureBlack = preferences.getBoolean("pure_black", false),
+                useArtwork = artworkTheme,
+                pureBlack = pureBlack,
             ) {
                 AetherWaveApp(
                     darkTheme = darkTheme,
-                    language = preferences.getString(AppLocale.KEY, AppLocale.SYSTEM) ?: AppLocale.SYSTEM,
+                    language = language,
                     materialYou = true,
                     onMaterialYouChanged = { _ -> },
-                    artworkTheme = preferences.getBoolean("artwork_theme", true),
+                    artworkTheme = artworkTheme,
                     onArtworkThemeChanged = { on ->
-                        preferences.edit().putBoolean("artwork_theme", on).apply()
-                        recreate()
+                        artworkTheme = on
+                        preferences.edit().putBoolean(KEY_ARTWORK_THEME, on).apply()
                     },
-                    pureBlack = preferences.getBoolean("pure_black", false),
+                    pureBlack = pureBlack,
                     onPureBlackChanged = { on ->
-                        preferences.edit().putBoolean("pure_black", on).apply()
-                        recreate()
+                        pureBlack = on
+                        preferences.edit().putBoolean(KEY_PURE_BLACK, on).apply()
                     },
-                    dynamicIsland = preferences.getBoolean("dynamic_island", false),
-                    islandX = com.aetherwave.core.island.IslandPrefs.read(this).first,
-                    islandY = com.aetherwave.core.island.IslandPrefs.read(this).second,
+                    dynamicIsland = dynamicIsland,
+                    onDynamicIslandChanged = { enabled -> onDynamicIslandToggled(enabled) },
+                    islandX = islandPosition.first,
+                    islandY = islandPosition.second,
                     onIslandPositionChanged = { x, y ->
-                        com.aetherwave.core.island.IslandPrefs.write(this@MainActivity, x, y)
+                        IslandPrefs.write(this@MainActivity, x, y)
+                        islandPosition = x to y
                     },
-                    islandStyle = com.aetherwave.core.island.IslandPrefs.readLook(this).style,
-                    islandCorner = com.aetherwave.core.island.IslandPrefs.readLook(this).corner,
+                    islandStyle = islandLook.style,
+                    islandCorner = islandLook.corner,
                     onIslandLookChanged = { style, corner ->
-                        com.aetherwave.core.island.IslandPrefs.writeLook(this@MainActivity, style, corner)
+                        IslandPrefs.writeLook(this@MainActivity, style, corner)
+                        islandLook = IslandPrefs.Look(style, corner)
                     },
-                    onDynamicIslandChanged = { enabled ->
-                        if (enabled && !Settings.canDrawOverlays(this@MainActivity)) {
-                            // Send the user to the permission screen. The setting is saved once permission is granted.
-                            startActivity(
-                                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")),
-                            )
-                        } else {
-                            preferences.edit().putBoolean("dynamic_island", enabled).apply()
-                            if (!enabled) DynamicIslandOverlay.hide()
-                            recreate()
-                        }
-                    },
-                    accent = preferences.getString("accent", "default") ?: "default",
+                    accent = accent,
                     onAccentChanged = { key ->
+                        accent = key
                         preferences.edit().putString("accent", key).apply()
-                        recreate()
                     },
                     onLanguageChanged = { tag ->
-                        preferences.edit().putString(AppLocale.KEY, tag).apply()
-                        recreate()
+                        // Only a real change restarts the activity, so the new language applies.
+                        if (tag != language) {
+                            preferences.edit().putString(AppLocale.KEY, tag).apply()
+                            language = tag
+                            recreate()
+                        }
                     },
                     themeMode = themeMode,
                     onThemeModeChanged = { mode ->
@@ -129,7 +155,7 @@ class MainActivity : ComponentActivity() {
                     liquidGlassEnabled = liquidGlassEnabled,
                     onLiquidGlassChanged = { enabled ->
                         liquidGlassEnabled = enabled
-                        preferences.edit().putBoolean("liquid_glass_enabled", enabled).apply()
+                        preferences.edit().putBoolean(KEY_LIQUID_GLASS, enabled).apply()
                     },
                 )
                 crashReport?.let { report ->
@@ -143,5 +169,41 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Turns the island on or off. Turning it on needs the overlay permission, so the permission
+     * screen opens once. Further taps do nothing until the user returns from it.
+     */
+    private fun onDynamicIslandToggled(enabled: Boolean) {
+        if (!enabled) {
+            pendingIslandPermission = false
+            preferences.edit().putBoolean(KEY_DYNAMIC_ISLAND, false).apply()
+            DynamicIslandOverlay.hide()
+            dynamicIslandState.value = false
+            return
+        }
+        if (Settings.canDrawOverlays(this)) {
+            preferences.edit().putBoolean(KEY_DYNAMIC_ISLAND, true).apply()
+            dynamicIslandState.value = true
+        } else {
+            // Permission is missing: open the screen once, and turn the island on when the user returns.
+            pendingIslandPermission = true
+            dynamicIslandState.value = false
+            if (!overlayPermissionOpen) {
+                overlayPermissionOpen = true
+                runCatching {
+                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+                }
+            }
+        }
+    }
+
+    private companion object {
+        const val PREFS = "aetherwave_preferences"
+        const val KEY_DYNAMIC_ISLAND = "dynamic_island"
+        const val KEY_LIQUID_GLASS = "liquid_glass_enabled"
+        const val KEY_ARTWORK_THEME = "artwork_theme"
+        const val KEY_PURE_BLACK = "pure_black"
     }
 }

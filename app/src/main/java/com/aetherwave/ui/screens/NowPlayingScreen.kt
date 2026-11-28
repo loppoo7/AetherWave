@@ -96,6 +96,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.graphicsLayer
 import android.os.Build
+import android.content.Context
 
 @Composable
 fun NowPlayingScreen(
@@ -189,7 +190,7 @@ fun NowPlayingScreen(
                 GlassRoundButton("⌄", hazeState, onBack)
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("NOW PLAYING", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f), fontSize = 9.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.np_eyebrow), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.64f), fontSize = 9.sp, letterSpacing = 3.sp, fontWeight = FontWeight.Bold)
                     Text("AETHERWAVE", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f), fontSize = 11.sp, letterSpacing = 2.sp)
                 }
                 Spacer(Modifier.weight(1f))
@@ -238,12 +239,34 @@ fun NowPlayingScreen(
                             Text(formatBadge.orEmpty(), modifier = Modifier
                                 .clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)).padding(horizontal = 13.dp, vertical = 6.dp),
                                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.86f), fontSize = 9.sp, letterSpacing = 1.5.sp, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.height(15.dp))
-                            Text(track.title, color = MaterialTheme.colorScheme.onBackground, fontSize = 22.sp, fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Text(track.artist, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.66f), fontSize = 14.sp, textAlign = TextAlign.Center)
+                            Spacer(Modifier.height(18.dp))
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        track.title,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        track.artist,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                                        fontSize = 14.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                if (state.lyrics != null) {
+                                    GlassRoundButton("⇪", hazeState) {
+                                        shareLyricLine(context, activeLyric, track.title, track.artist)
+                                    }
+                                }
+                                GlassRoundButton(if (track.isLiked) "♥" else "♡", hazeState, onLike)
+                            }
                         } else {
-                            Text("Choose a track to begin", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.76f), fontSize = 16.sp)
+                            Text(stringResource(R.string.np_choose_track), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.76f), fontSize = 16.sp)
                         }
                     }
                 }
@@ -278,12 +301,12 @@ fun NowPlayingScreen(
                 ControlGlyph("⤨", selected = playback.shuffleMode, onClick = onShuffle)
                 ControlGlyph("|◀", onClick = { tap(); onPrevious() }, large = true)
                 LiquidGlass(
-                    modifier = Modifier.size(66.dp).clickable(onClick = { tap(); onPlayPause() }),
+                    modifier = Modifier.size(78.dp).clickable(onClick = { tap(); onPlayPause() }),
                     state = hazeState,
                     tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.24f),
                     content = {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(if (playback.isPlaying) "Ⅱ" else "▶", color = MaterialTheme.colorScheme.onBackground, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                            Text(if (playback.isPlaying) "Ⅱ" else "▶", color = MaterialTheme.colorScheme.onBackground, fontSize = 30.sp, fontWeight = FontWeight.Bold)
                         }
                     },
                 )
@@ -291,24 +314,9 @@ fun NowPlayingScreen(
                 ControlGlyph(if (playback.repeatMode == androidx.media3.common.Player.REPEAT_MODE_ONE) "↻1" else "↻", selected = playback.repeatMode != androidx.media3.common.Player.REPEAT_MODE_OFF, onClick = onRepeat)
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                ActionGlyph(if (track?.isLiked == true) "♥" else "♡", stringResource(R.string.np_like), track?.isLiked == true, onLike)
                 ActionGlyph(if (state.isDownloading) "…" else "↓", when { track?.isDownloaded == true -> "SAVED"; track?.source?.name == "LOCAL" -> "ON DEVICE"; else -> "DOWNLOAD" }, track?.isDownloaded == true, onDownload)
                 ActionGlyph("≋", if (state.showLyrics) stringResource(R.string.np_artwork) else stringResource(R.string.np_lyrics), state.showLyrics, onToggleLyrics)
                 ActionGlyph("☰", stringResource(R.string.np_up_next), showQueue) { showQueue = true }
-                if (state.lyrics != null) {
-                    ActionGlyph("⇪", stringResource(R.string.np_share), false) {
-                        activeLyric?.takeIf(String::isNotBlank)?.let { line ->
-                            val body = "\"$line\"\n${track?.title.orEmpty()} — ${track?.artist.orEmpty()}"
-                            val send = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, body)
-                            }
-                            context.startActivity(
-                                Intent.createChooser(send, "Share lyric").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                            )
-                        }
-                    }
-                }
             }
             state.playback.errorMessage?.let {
                 Text(it, color = Color(0xFFFFB7B7), fontSize = 11.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
@@ -415,10 +423,10 @@ private fun PlaybackOptionsSheet(
             Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            Text("Playback options", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.np_options_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
             ChoiceChips(
-                label = "Sleep timer",
+                label = stringResource(R.string.np_sleep_timer),
                 options = listOf("Off" to "off", "15 min" to "15", "30 min" to "30", "45 min" to "45", "1 hour" to "60", "End of track" to "eot"),
                 selected = sleepChoice,
                 onSelect = { choice ->
@@ -436,14 +444,14 @@ private fun PlaybackOptionsSheet(
             }
 
             ChoiceChips(
-                label = "Speed",
+                label = stringResource(R.string.np_speed),
                 options = listOf("0.75×" to 0.75f, "1×" to 1f, "1.25×" to 1.25f, "1.5×" to 1.5f, "2×" to 2f),
                 selected = playback.playbackSpeed,
                 onSelect = onSetSpeed,
             )
 
             ChoiceChips(
-                label = "Pitch",
+                label = stringResource(R.string.np_pitch),
                 options = listOf("Lower" to 0.9f, "Original" to 1f, "Higher" to 1.1f),
                 selected = playback.pitch,
                 onSelect = onSetPitch,
@@ -451,29 +459,29 @@ private fun PlaybackOptionsSheet(
 
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Skip silence", style = MaterialTheme.typography.labelLarge)
-                    Text("Shortens quiet gaps while playing", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.np_skip_silence), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.np_skip_silence_desc), style = MaterialTheme.typography.bodySmall)
                 }
                 Switch(checked = playback.skipSilence, onCheckedChange = onSetSkipSilence)
             }
 
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Normalize volume", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.np_normalize), style = MaterialTheme.typography.labelLarge)
                     Text("Evens out loudness between tracks. Local files are never changed.", style = MaterialTheme.typography.bodySmall)
                 }
                 Switch(checked = normalize, onCheckedChange = onSetNormalize)
             }
 
             ChoiceChips(
-                label = "Sound style",
+                label = stringResource(R.string.np_sound_style),
                 options = SoundStyle.entries.map { it.label to it },
                 selected = playback.soundStyle,
                 onSelect = { style -> if (style != null) onSetSoundStyle(style) },
             )
 
             ChoiceChips(
-                label = "Loudness target",
+                label = stringResource(R.string.np_loudness),
                 options = LoudnessLevel.entries.map { it.label to it },
                 selected = playback.loudnessLevel,
                 onSelect = onSetLoudness,
@@ -635,3 +643,15 @@ private fun audioFormatBadge(track: MusicTrack, mimeType: String?): String {
     }
 }
 
+
+/** Shares the lyric line that is playing, with the song title and artist. */
+private fun shareLyricLine(context: Context, line: String?, title: String, artist: String) {
+    line?.takeIf(String::isNotBlank)?.let { text ->
+        val body = "\"$text\"\n$title — $artist"
+        val send = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, body)
+        }
+        context.startActivity(Intent.createChooser(send, "Share lyric").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+}

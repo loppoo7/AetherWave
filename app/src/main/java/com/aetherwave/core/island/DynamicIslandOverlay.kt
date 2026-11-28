@@ -95,6 +95,8 @@ object DynamicIslandOverlay {
     private var stateJob: Job? = null
     private var savedContext: Context? = null
     private var savedController: PlaybackController? = null
+    private var attachedOnce = false
+    private var detachedBySystem = false
     private var expandTween: FrameTween? = null
     private var blurTween: FrameTween? = null
     private var blurPx = 0
@@ -102,7 +104,8 @@ object DynamicIslandOverlay {
     /** Adds the island if the overlay permission is granted. */
     fun show(context: Context, controller: PlaybackController) {
         val app = context.applicationContext
-        if (island?.isAttachedToWindow == true || !Settings.canDrawOverlays(app)) return
+        if (island != null && !detachedBySystem) return
+        if (!Settings.canDrawOverlays(app)) return
         teardown()
         savedContext = app
         savedController = controller
@@ -134,7 +137,21 @@ object DynamicIslandOverlay {
         view.setOnTouchListener(dragOrTapListener(app, wm))
         view.alpha = 0f
         view.translationY = -dpF(app, 24f).toFloat()
-        wm.addView(view, lp)
+        view.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {
+                attachedOnce = true
+            }
+
+            override fun onViewDetachedFromWindow(v: View) {
+                // Only a detach after the view was attached counts. This ignores the first layout pass.
+                if (attachedOnce) detachedBySystem = true
+            }
+        })
+        val added = runCatching { wm.addView(view, lp) }.isSuccess
+        if (!added) {
+            teardown()
+            return
+        }
         FrameTween(ENTER_MS) { t ->
             view.alpha = t
             view.translationY = -dpF(app, 24f) * (1f - t)
@@ -184,6 +201,8 @@ object DynamicIslandOverlay {
         coverBoxes = emptyList()
         artworkUrl = null
         expanded = false
+        attachedOnce = false
+        detachedBySystem = false
     }
 
     private fun render(playback: PlaybackState, lines: List<LyricLine>) {
@@ -192,7 +211,7 @@ object DynamicIslandOverlay {
             hide()
             return
         }
-        if (island?.isAttachedToWindow == false) {
+        if (detachedBySystem) {
             // The system took the island away, for example while a game or another app was in front.
             // Build it again instead of leaving it missing.
             val context = savedContext
@@ -516,13 +535,13 @@ object DynamicIslandOverlay {
             )
             addView(remaining)
         }
-        val previous = iconButton(context, android.R.drawable.ic_media_previous, "Previous") {
+        val previous = iconButton(context, android.R.drawable.ic_media_previous, context.getString(R.string.island_previous)) {
             controller.seekToPrevious()
         }
         val play = iconButton(context, android.R.drawable.ic_media_pause, context.getString(R.string.island_play_pause)) {
             controller.playPause()
         }
-        val next = iconButton(context, android.R.drawable.ic_media_next, "Next") {
+        val next = iconButton(context, android.R.drawable.ic_media_next, context.getString(R.string.island_next)) {
             controller.seekToNext()
         }
         val controls = LinearLayout(context).apply {

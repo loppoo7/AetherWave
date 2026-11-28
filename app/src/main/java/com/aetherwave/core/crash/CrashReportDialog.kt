@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.aetherwave.R
 
 /** Shows the report saved by [CrashReporter] from the previous run, with a Copy button. */
 @Composable
@@ -25,7 +27,7 @@ fun CrashReportDialog(report: String, onDismiss: () -> Unit) {
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("AetherWave stopped unexpectedly") },
+        title = { Text(stringResource(R.string.crash_title)) },
         text = {
             Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
                 Text(
@@ -39,11 +41,11 @@ fun CrashReportDialog(report: String, onDismiss: () -> Unit) {
         confirmButton = {
             TextButton(onClick = {
                 val clipboard = context.getSystemService(ClipboardManager::class.java)
-                clipboard?.setPrimaryClip(ClipData.newPlainText("AetherWave crash report", report))
-            }) { Text("Copy") }
+                clipboard?.setPrimaryClip(ClipData.newPlainText(stringResource(R.string.crash_report_title), report))
+            }) { Text(stringResource(R.string.action_copy)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_close)) }
         },
     )
 }

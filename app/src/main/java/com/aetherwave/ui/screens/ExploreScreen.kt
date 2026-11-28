@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.sp
 import com.aetherwave.domain.model.MusicTrack
 import com.aetherwave.ui.components.TrackRow
 import com.aetherwave.ui.viewmodel.ExploreUiState
+import androidx.compose.ui.res.stringResource
+import com.aetherwave.R
 
 @Composable
 fun ExploreScreen(
@@ -27,13 +29,13 @@ fun ExploreScreen(
     val muted = foreground.copy(alpha = 0.6f)
     Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("DISCOVER", color = muted, fontSize = 10.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
-            Text("Explore", color = foreground, fontSize = 29.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.label_discover), color = muted, fontSize = 10.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.screen_explore), color = foreground, fontSize = 29.sp, fontWeight = FontWeight.Bold)
         }
         LazyColumn(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (state.topPlayed.isNotEmpty()) {
                 item(key = "top-played-title") {
-                    Text("Your most played", color = foreground, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.explore_most_played), color = foreground, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 }
                 itemsIndexed(state.topPlayed, key = { _, track -> "top-${track.id}" }) { index, track ->
                     TrackRow(track, onPlay = { onPlayQueue(state.topPlayed, index) })

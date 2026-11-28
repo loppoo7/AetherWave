@@ -329,7 +329,7 @@ private fun BottomNavigationBar(
     ) {
         NavigationItem("⌂", stringResource(R.string.nav_home), selectedRoute == "home", Modifier.weight(1f), onHome)
         NavigationItem("⌕", stringResource(R.string.nav_search), selectedRoute == "search", Modifier.weight(1f), onSearch)
-        NavigationItem("✦", stringResource(R.string.nav_explore), selectedRoute == "explore", Modifier.weight(1f), onExplore)
+        NavigationItem("◎", stringResource(R.string.nav_explore), selectedRoute == "explore", Modifier.weight(1f), onExplore)
         NavigationItem("▦", stringResource(R.string.nav_library), selectedRoute.startsWith("library"), Modifier.weight(1f), onLibrary)
     }
 }

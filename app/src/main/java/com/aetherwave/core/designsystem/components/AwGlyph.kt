@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.rounded.Explore
 
 /**
  * Icon set for the whole app. Each glyph string used by the screens maps to one Material Rounded
@@ -44,6 +45,7 @@ private val GLYPH_ICONS: Map<String, ImageVector> by lazy {
         "⌂" to Icons.Rounded.Home,
         "⌕" to Icons.Rounded.Search,
         "✦" to Icons.Rounded.AutoAwesome,
+    "◎" to Icons.Rounded.Explore,
         "▦" to Icons.Rounded.GridView,
         "⚙" to Icons.Rounded.Settings,
         "⌄" to Icons.Rounded.KeyboardArrowDown,

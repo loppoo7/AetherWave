@@ -19,6 +19,8 @@ import androidx.compose.ui.window.Dialog
 import com.aetherwave.core.designsystem.components.liquidGlass
 import com.aetherwave.domain.model.MusicPlaylist
 import dev.chrisbanes.haze.HazeState
+import androidx.compose.ui.res.stringResource
+import com.aetherwave.R
 
 @Composable
 fun PlaylistPickerDialog(
@@ -34,7 +36,7 @@ fun PlaylistPickerDialog(
                 .padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Add to playlist", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 19.sp)
+            Text(stringResource(R.string.action_add_to_playlist), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 19.sp)
             if (playlists.isEmpty()) {
                 Text("Create a playlist in Library first.", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontSize = 13.sp)
             } else {
@@ -44,7 +46,7 @@ fun PlaylistPickerDialog(
                     }
                 }
             }
-            Text("CLOSE", modifier = Modifier.clickable(onClick = onDismiss).padding(top = 6.dp), color = MaterialTheme.colorScheme.primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.action_close_caps), modifier = Modifier.clickable(onClick = onDismiss).padding(top = 6.dp), color = MaterialTheme.colorScheme.primary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

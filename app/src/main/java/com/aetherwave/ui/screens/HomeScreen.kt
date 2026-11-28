@@ -233,11 +233,11 @@ private fun QuickPickItem(
             Text("⋮", color = muted, fontSize = 19.sp, modifier = Modifier.clickable { menuExpanded = true }.padding(horizontal = 5.dp, vertical = 2.dp))
             DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                 DropdownMenuItem(
-                    text = { Text("Play now") },
+                    text = { Text(stringResource(R.string.action_play_now)) },
                     onClick = { menuExpanded = false; onPlayNow() },
                 )
                 DropdownMenuItem(
-                    text = { Text("Add to playlist") },
+                    text = { Text(stringResource(R.string.action_add_to_playlist)) },
                     onClick = { menuExpanded = false; onAddToPlaylist() },
                 )
             }

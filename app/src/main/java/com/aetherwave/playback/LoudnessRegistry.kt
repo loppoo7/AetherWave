@@ -17,6 +17,7 @@ object LoudnessRegistry {
     private val loudnessByVideoId = ConcurrentHashMap<String, Float>()
 
     fun record(videoId: String, loudnessDb: Float) {
+        if (loudnessByVideoId.size > 500) loudnessByVideoId.clear()
         loudnessByVideoId[videoId] = loudnessDb
     }
 

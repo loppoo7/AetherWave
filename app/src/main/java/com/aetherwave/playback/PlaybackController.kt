@@ -62,6 +62,12 @@ class PlaybackController @Inject constructor(
     /** Live snapshot of the player's timeline, in playback order. */
     val queue: StateFlow<List<MusicTrack>> = mutableQueue.asStateFlow()
     private val trackRegistry = ConcurrentHashMap<String, MusicTrack>()
+
+    /** Keeps the lookup table small: it is cleared once it grows past a few hundred tracks. */
+    private fun rememberTrack(track: MusicTrack) {
+        if (trackRegistry.size > MAX_REGISTRY) trackRegistry.clear()
+        trackRegistry[track.id] = track
+    }
     private val mainExecutor by lazy { ContextCompat.getMainExecutor(context) }
 
     @Volatile private var controller: MediaController? = null
@@ -110,7 +116,7 @@ class PlaybackController @Inject constructor(
      */
     fun appendTracks(tracks: List<MusicTrack>) {
         if (tracks.isEmpty()) return
-        tracks.forEach { trackRegistry[it.id] = it }
+        tracks.forEach { rememberTrack(it) }
         scope.launch {
             val active = controller?.takeIf { it.isConnected } ?: return@launch
             val queued = (0 until active.mediaItemCount).mapTo(HashSet()) { active.getMediaItemAt(it).mediaId }
@@ -122,7 +128,7 @@ class PlaybackController @Inject constructor(
     }
 
     fun updateTrackMetadata(track: MusicTrack) {
-        trackRegistry[track.id] = track
+        rememberTrack(track)
         controller?.takeIf { it.isConnected }?.let(::publish)
     }
 
@@ -304,7 +310,7 @@ class PlaybackController @Inject constructor(
 
     private fun startQueue(tracks: List<MusicTrack>, startIndex: Int, failureMessage: String) {
         if (tracks.isEmpty()) return
-        tracks.forEach { trackRegistry[it.id] = it }
+        tracks.forEach { rememberTrack(it) }
         scope.launch {
             try {
                 val active = awaitController()
@@ -502,6 +508,7 @@ class PlaybackController @Inject constructor(
         if (!mutableState.value.sponsorBlockEnabled || mediaId == null || !mediaId.startsWith("youtube:")) return
         val videoId = mediaId.removePrefix("youtube:")
         if (sponsorSegments.containsKey(videoId)) return
+        if (sponsorSegments.size > 300) sponsorSegments.clear()
         scope.launch {
             sponsorSegments[videoId] = sponsorBlock.segmentsFor(videoId)
         }
@@ -627,5 +634,6 @@ class PlaybackController @Inject constructor(
         const val SLEEP_FADE_MS = 60_000L
         const val FADE_STEP_MS = 1_000L
         const val MAX_RETRIES_PER_TRACK = 1
+        const val MAX_REGISTRY = 400
     }
 }

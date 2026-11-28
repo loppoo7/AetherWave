@@ -33,6 +33,8 @@ import com.aetherwave.ui.components.TrackRow
 import com.aetherwave.ui.viewmodel.HomeUiState
 import com.aetherwave.ui.viewmodel.LibraryUiState
 import dev.chrisbanes.haze.HazeState
+import androidx.compose.ui.res.stringResource
+import com.aetherwave.R
 
 private val libraryTabs = listOf("Playlists", "Local Files", "Downloads", "Liked")
 
@@ -53,8 +55,8 @@ fun LibraryScreen(
     var expandedPlaylist by remember { mutableStateOf<String?>(null) }
     Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 22.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text("YOUR COLLECTION", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.56f), fontSize = 10.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
-            Text("Library", color = MaterialTheme.colorScheme.onBackground, fontSize = 29.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.library_eyebrow), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.56f), fontSize = 10.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.screen_library), color = MaterialTheme.colorScheme.onBackground, fontSize = 29.sp, fontWeight = FontWeight.Bold)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
             libraryTabs.forEachIndexed { index, title ->
@@ -76,7 +78,7 @@ fun LibraryScreen(
         state.message?.let { Text(it, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontSize = 11.sp) }
         if (initialTab == 0) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Your playlists", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Text(stringResource(R.string.library_your_playlists), color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 Text("+ NEW PLAYLIST", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 10.sp,
                     modifier = Modifier.clickable { showCreateDialog = true }.padding(8.dp))
             }
@@ -89,7 +91,7 @@ fun LibraryScreen(
                                 Text(playlist.name, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                                 Text("${playlist.tracks.size} tracks", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.58f), fontSize = 11.sp)
                             }
-                            Text("DELETE", color = Color(0xFFFFB7B7), fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onDeletePlaylist(playlist.id) }.padding(8.dp))
+                            Text(stringResource(R.string.action_delete_caps), color = Color(0xFFFFB7B7), fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onDeletePlaylist(playlist.id) }.padding(8.dp))
                         }
                         if (expandedPlaylist == playlist.id) {
                             playlist.tracks.forEachIndexed { index, track ->
@@ -144,18 +146,18 @@ private fun CreatePlaylistDialog(hazeState: HazeState, onDismiss: () -> Unit, on
     var name by remember { mutableStateOf("") }
     Dialog(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().liquidGlass(hazeState, MaterialTheme.colorScheme.surface.copy(alpha = 0.97f), RoundedCornerShape(26.dp)).padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("New playlist", color = MaterialTheme.colorScheme.onBackground, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.library_new_playlist), color = MaterialTheme.colorScheme.onBackground, fontSize = 19.sp, fontWeight = FontWeight.Bold)
             BasicTextField(
                 value = name,
                 onValueChange = { name = it.take(48) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().liquidGlass(hazeState, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(13.dp)).padding(13.dp),
                 textStyle = androidx.compose.ui.text.TextStyle(color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp),
-                decorationBox = { inner -> if (name.isEmpty()) Text("Playlist name", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f), fontSize = 14.sp); inner() },
+                decorationBox = { inner -> if (name.isEmpty()) Text(stringResource(R.string.library_playlist_name), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f), fontSize = 14.sp); inner() },
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                Text("CANCEL", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontSize = 10.sp, modifier = Modifier.clickable(onClick = onDismiss).padding(10.dp))
-                Text("CREATE", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 10.sp,
+                Text(stringResource(R.string.action_cancel_caps), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.68f), fontSize = 10.sp, modifier = Modifier.clickable(onClick = onDismiss).padding(10.dp))
+                Text(stringResource(R.string.action_create_caps), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 10.sp,
                     modifier = Modifier.clickable { if (name.isNotBlank()) onCreate(name.trim()) }.padding(10.dp))
             }
         }

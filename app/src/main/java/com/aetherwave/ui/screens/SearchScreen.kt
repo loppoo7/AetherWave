@@ -37,6 +37,8 @@ import com.aetherwave.ui.components.PlaylistPickerDialog
 import com.aetherwave.ui.components.TrackRow
 import com.aetherwave.ui.viewmodel.SearchUiState
 import dev.chrisbanes.haze.HazeState
+import androidx.compose.ui.res.stringResource
+import com.aetherwave.R
 
 @Composable
 fun SearchScreen(
@@ -52,7 +54,7 @@ fun SearchScreen(
     val focusManager = LocalFocusManager.current
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text("DISCOVER", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.56f), fontSize = 10.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.label_discover), color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.56f), fontSize = 10.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Bold)
             Text("Find your next wave.", color = MaterialTheme.colorScheme.onBackground, fontSize = 27.sp, fontWeight = FontWeight.Bold)
         }
         Row(

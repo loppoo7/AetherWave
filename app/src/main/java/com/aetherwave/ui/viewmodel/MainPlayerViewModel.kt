@@ -109,6 +109,7 @@ class MainPlayerViewModel @Inject constructor(
     private fun maybeExtendRadio(playback: PlaybackState) {
         val seed = playback.currentMusicTrack?.takeIf { it.source == TrackSource.YOUTUBE } ?: return
         if (playback.queueSize == 0 || playback.queueSize - playback.queueIndex > RADIO_THRESHOLD) return
+        if (radioSeedIds.size > 200) radioSeedIds.clear()
         if (!radioSeedIds.add(seed.id)) return
         viewModelScope.launch {
             try {
