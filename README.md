@@ -302,3 +302,12 @@ If the app crashes, the stack trace is saved to the app's private storage. The n
 ## 3.8.2
 
 - **Build fix.** The crash dialog reads its strings in composable scope, not inside the Copy click handler. Its hint line is now translated as well.
+
+## 3.8.3
+
+- **Island stays under the status bar.** It is placed at least 4 dp below the status bar, at start-up and while it is dragged.
+- **Smooth expand and collapse.** The pill's background is clipped and grows to the card's size, and the card fades in. Collapsing runs the same motion in reverse. The window returns to the pill's size when the card is closed, so the empty area does not block touches on apps below.
+
+## 3.8.4
+
+- **Island sits directly under the status bar.** The earlier offset is gone, and the island no longer moves up or down. Dragging moves it sideways only. The status bar height is read from the system, with a 24 dp fallback.

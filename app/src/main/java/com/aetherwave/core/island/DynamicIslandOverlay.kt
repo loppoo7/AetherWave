@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
@@ -96,6 +97,7 @@ object DynamicIslandOverlay {
     private var savedContext: Context? = null
     private var savedController: PlaybackController? = null
     private var attachedOnce = false
+    private var compactHeight = 0
     private var detachedBySystem = false
     private var expandTween: FrameTween? = null
     private var blurTween: FrameTween? = null
@@ -112,7 +114,7 @@ object DynamicIslandOverlay {
         val wm = app.getSystemService(WindowManager::class.java) ?: return
         val look = IslandPrefs.readLook(app)
         val view = buildIsland(app, controller, look)
-        val (fx, fy) = IslandPrefs.read(app)
+        val (fx, _) = IslandPrefs.read(app)
         val metrics = app.resources.displayMetrics
         blurPx = dpF(app, BLUR_DP)
         val blurSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -131,7 +133,7 @@ object DynamicIslandOverlay {
         ).apply {
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
             x = (fx * metrics.widthPixels / 2f).roundToInt()
-            y = statusBarHeight(app) + (fy * metrics.heightPixels).roundToInt()
+            y = statusBarHeight(app)
             if (blurSupported) blurBehindRadius = 0
         }
         view.setOnTouchListener(dragOrTapListener(app, wm))
@@ -308,37 +310,39 @@ object DynamicIslandOverlay {
     private fun setExpanded(open: Boolean) {
         expanded = open
         val part = expandedPart ?: return
-        val compact = compactPart
+        val compact = compactPart ?: return
+        val root = island ?: return
         expandTween?.cancel()
         if (open) {
-            // The compact pill fades and shrinks away, and the card grows in its place.
+            // Clip the background to the compact height first, so the window can grow without a jump.
+            compactHeight = compact.height.coerceAtLeast(1)
+            root.clipBounds = Rect(0, 0, root.width, compactHeight)
+            part.alpha = 0f
             part.visibility = View.VISIBLE
-            compact?.let { c ->
-                FrameTween(COLLAPSE_MS, onEnd = { c.visibility = View.GONE }) { t ->
-                    c.alpha = 1f - t
-                    c.scaleX = 1f - 0.12f * t
-                    c.scaleY = 1f - 0.12f * t
-                }.start()
+            root.post {
+                val fullHeight = root.height
+                val startHeight = compactHeight
+                expandTween = FrameTween(EXPAND_MS) { t ->
+                    val h = startHeight + ((fullHeight - startHeight) * t).roundToInt()
+                    root.clipBounds = Rect(0, 0, root.width, h)
+                    compact.alpha = 1f - t
+                    part.alpha = t
+                }.also { it.start() }
             }
-            expandTween = FrameTween(EXPAND_MS, easing = ::easeOutBack) { t ->
-                part.alpha = t.coerceIn(0f, 1f)
-                part.scaleY = 0.8f + 0.2f * t
-                part.translationY = -dpF(part.context, 6f) * (1f - t)
-            }.also { it.start() }
         } else {
-            // The card shrinks away, and the compact pill comes back.
-            compact?.let { c ->
-                c.visibility = View.VISIBLE
-                FrameTween(EXPAND_MS, easing = ::easeOutBack) { t ->
-                    c.alpha = t.coerceIn(0f, 1f)
-                    c.scaleX = 0.88f + 0.12f * t
-                    c.scaleY = 0.88f + 0.12f * t
-                }.start()
-            }
-            expandTween = FrameTween(COLLAPSE_MS, onEnd = { part.visibility = View.GONE }) { t ->
+            val fullHeight = root.height
+            val endHeight = compactHeight.coerceAtLeast(1)
+            root.clipBounds = Rect(0, 0, root.width, fullHeight)
+            expandTween = FrameTween(COLLAPSE_MS, onEnd = {
+                // Hide the card, and let the window shrink back to the pill.
+                part.visibility = View.GONE
+                root.clipBounds = null
+                compact.alpha = 1f
+            }) { t ->
+                val h = fullHeight - ((fullHeight - endHeight) * t).roundToInt()
+                root.clipBounds = Rect(0, 0, root.width, h)
+                compact.alpha = t
                 part.alpha = 1f - t
-                part.scaleY = 1f - 0.2f * t
-                part.translationY = -dpF(part.context, 6f) * t
             }.also { it.start() }
         }
     }
@@ -386,7 +390,7 @@ object DynamicIslandOverlay {
                     if (!moved && (abs(dx) > slop || abs(dy) > slop)) moved = true
                     if (moved) {
                         lp.x = (startX + dx).roundToInt().coerceIn(-halfWidth.toInt(), halfWidth.toInt())
-                        lp.y = (startY + dy).roundToInt().coerceIn(0, metrics.heightPixels / 2)
+                        lp.y = statusBarHeight(app)
                         wm.updateViewLayout(view, lp)
                     }
                     true
@@ -394,12 +398,7 @@ object DynamicIslandOverlay {
                 MotionEvent.ACTION_UP -> {
                     setPressBlur(false)
                     if (moved) {
-                        val top = statusBarHeight(app)
-                        IslandPrefs.write(
-                            app,
-                            lp.x / halfWidth,
-                            (lp.y - top).coerceAtLeast(0) / metrics.heightPixels.toFloat(),
-                        )
+                        IslandPrefs.write(app, lp.x / halfWidth, 0f)
                     } else {
                         setExpanded(!expanded)
                     }
@@ -633,7 +632,8 @@ object DynamicIslandOverlay {
 
     private fun statusBarHeight(context: Context): Int {
         val id = context.resources.getIdentifier("status_bar_height", "dimen", "android")
-        return if (id > 0) context.resources.getDimensionPixelSize(id) else dp(context, 24)
+        val fromSystem = if (id > 0) context.resources.getDimensionPixelSize(id) else 0
+        return if (fromSystem > 0) fromSystem else dp(context, 24)
     }
 
     private fun dp(context: Context, value: Int): Int = dpF(context, value.toFloat())
